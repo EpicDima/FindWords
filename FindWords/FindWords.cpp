@@ -16,6 +16,8 @@ string* matrix;
 const unsigned int minLength = 4;
 const unsigned int maxLength = 10;
 
+vector<string> vocabularyWords;
+
 
 void input()
 {
@@ -33,9 +35,22 @@ void input()
 }
 
 
+bool isSubstringInDictionary(string str)
+{
+	unsigned int size = vocabularyWords.size();
+	for (unsigned int i = 0; i < size; i++) {
+		if (vocabularyWords[i].find(str) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
 vector<string> f(string word, int x, int y, bool** mask)
 {
 	vector<string> newWords;
+	
 	if (word.size() >= minLength) {
 		newWords.push_back(word);
 	}
@@ -43,6 +58,11 @@ vector<string> f(string word, int x, int y, bool** mask)
 	if (word.size() >= maxLength) {
 		return newWords;
 	}
+	
+	if (!isSubstringInDictionary(word)) {
+		return newWords;
+	}
+	
 	int x2;
 	int y2;
 	for (int i = 0; i < 4; i++) {
@@ -108,7 +128,6 @@ int main()
 	fstream vocabularyFile("C:/Users/Dima/Desktop/C++/Филворды/word_rus.txt");
 	const unsigned int vocabularySize = 34010;
 
-	vector<string> vocabularyWords;
 	vocabularyWords.reserve(vocabularySize);
 
 	for (int i = 0; i < vocabularySize; i++) {
@@ -142,13 +161,13 @@ int main()
 	}
 	
 	
-	for (unsigned int i = 0; i < possibleWords.size(); i++) {
-		cout << possibleWords[i] << endl;
-	}
-
-	//for (unsigned int i = 0; i < matchedWords.size(); i++) {
-	//	cout << matchedWords[i] << endl;
+	//for (unsigned int i = 0; i < possibleWords.size(); i++) {
+	//	cout << possibleWords[i] << endl;
 	//}
+
+	for (unsigned int i = 0; i < matchedWords.size(); i++) {
+		cout << matchedWords[i] << endl;
+	}
 
 	return 0;
 }
