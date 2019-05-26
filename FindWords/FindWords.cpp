@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 #include <windows.h>
 
 using namespace std;
@@ -119,14 +120,20 @@ vector<string> findAllPossibleWords()
 }
 
 
+bool comparator(const string &a, const string &b)
+{
+    if (a.size() > b.size()) return true;
+    return false;
+}
+
+
 int main()
 {
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 	
-	//fstream vocabularyFile("C:/Users/Dima/Desktop/C++/Филворды/dictionary cp1251.txt");
-	fstream vocabularyFile("C:/Users/Dima/Desktop/C++/Филворды/word_rus.txt");
-	const unsigned int vocabularySize = 34010;
+	fstream vocabularyFile("dictionary.txt");
+	const unsigned int vocabularySize = 56290;
 
 	vocabularyWords.reserve(vocabularySize);
 
@@ -160,10 +167,8 @@ int main()
 		}
 	}
 	
-	
-	//for (unsigned int i = 0; i < possibleWords.size(); i++) {
-	//	cout << possibleWords[i] << endl;
-	//}
+
+	sort(matchedWords.begin(), matchedWords.end(), comparator);
 
 	for (unsigned int i = 0; i < matchedWords.size(); i++) {
 		cout << matchedWords[i] << endl;
