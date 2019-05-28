@@ -6,18 +6,19 @@
 #include <map>
 #include <windows.h>
 
-using namespace std;
+using namespace std;						   
 
 
-int dx[] = { 1, -1, 0, 0 };
-int dy[] = { 0, 0, 1, -1 };
-
-unsigned int n;
-unsigned int m;
-string* matrix;
-
-const unsigned int minLength = 4;
-const unsigned int maxLength = 10;
+vector<string> findAllPossibleWords();
+vector<string> f(string word, int x, int y, bool** mask);
+void openDictionary(string filename);
+void changeDictionary();
+void outputResult(vector<string> matchedWords, vector<string> possibleWords);
+bool comparator(const string &a, const string &b);
+void calculate();
+void inputTable();
+void printMenu();
+void menu();
 
 
 class Trie
@@ -105,23 +106,63 @@ private:
 };
 
 
-Trie* vocabularyWords = new Trie();
+const int dx[] = { 1, -1, 0, 0 };
+const int dy[] = { 0, 0, 1, -1 };
+
+unsigned int n;
+unsigned int m;
+string* matrix;
+
+unsigned int minLength = 4;
+unsigned int maxLength = 10;
+
+Trie* vocabularyWords;
+unsigned int vocabularyWordsSize;
+
+bool russianLanguage = true;
+const string defaultFilename = "dictionary.txt";
 
 
-void input()
+int main()
 {
-	cout << "Введите количество строк: ";
-	cin >> n;
-	cout << "Введите количество столбцов: ";
-	cin >> m;
+	SetConsoleCP(1251);
+	SetConsoleOutputCP(1251);
 
-	matrix = new string[n];
+	openDictionary(defaultFilename);
+	menu();
 
-	cout << "Вводите буквы (строка пишется без пробелов)\n";
-	for (unsigned int i = 0; i < n; i++) {
-		cin >> matrix[i];
-	}
+	return 0;
 }
+
+
+vector<string> findAllPossibleWords()
+{
+	vector<string> a;
+
+	bool** mask = new bool* [n];
+	for (unsigned int i = 0; i < n; i++) {
+		mask[i] = new bool[m];
+		for (unsigned int j = 0; j < m; j++) {
+			mask[i][j] = false;
+		}
+	}
+	
+	for (unsigned int i = 0; i < n; i++) {
+		for (unsigned int j = 0; j < m; j++) {
+			if (!mask[i][j]) {
+				mask[i][j] = true;
+				vector<string> q = f(string(1, matrix[i][j]), i, j, mask);
+				for (int h = 0; h < q.size(); h++) {
+					a.push_back(q[h]);
+				}
+				mask[i][j] = false;
+			}
+		}
+	}
+
+	return a;
+}
+
 
 vector<string> f(string word, int x, int y, bool** mask)
 {
@@ -130,7 +171,6 @@ vector<string> f(string word, int x, int y, bool** mask)
 	if (word.size() >= minLength) {
 		newWords.push_back(word);
 	}
-
 	
 	if (word.size() >= maxLength || !vocabularyWords->findSubstr(word)) {
 		return newWords;
@@ -170,32 +210,45 @@ vector<string> f(string word, int x, int y, bool** mask)
 }
 
 
-vector<string> findAllPossibleWords()
+void openDictionary(string filename)
 {
-	vector<string> a;
-
-	bool** mask = new bool* [n];
-	for (unsigned int i = 0; i < n; i++) {
-		mask[i] = new bool[m];
-		for (unsigned int j = 0; j < m; j++) {
-			mask[i][j] = false;
-		}
+	ifstream vocabularyFile(filename);
+	vocabularyWordsSize = 0;
+	vocabularyWords = new Trie();
+	string t;
+	while (getline(vocabularyFile, t)) {
+		vocabularyWords->insert(t);
+		vocabularyWordsSize++;
 	}
-	
-	for (unsigned int i = 0; i < n; i++) {
-		for (unsigned int j = 0; j < m; j++) {
-			if (!mask[i][j]) {
-				mask[i][j] = true;
-				vector<string> q = f(string(1, matrix[i][j]), i, j, mask);
-				for (int h = 0; h < q.size(); h++) {
-					a.push_back(q[h]);
-				}
-				mask[i][j] = false;
-			}
-		}
-	}
+}
 
-	return a;
+
+void changeDictionary()
+{
+	string filename;
+	cout << endl << (russianLanguage ? "Введите путь к файлу-словарю: " 
+                                     : "Enter the path to the dictionary file: ");
+	cin >> filename;
+	openDictionary(filename);
+}
+
+
+void outputResult(vector<string> matchedWords, vector<string> possibleWords)
+{
+	cout << (russianLanguage ? "Количество словарных слов, подходящих под условия длины:              "
+		                     : "The number of vocabulary words that fit the conditions of the length: ") 
+							 << setw(8) << vocabularyWordsSize << endl;
+	cout << (russianLanguage ? "Количество возможных слов в таблице:                                  " 
+							 : "Number of possible words in the table:                                ") 
+							 << setw(8) << possibleWords.size() << endl;
+	cout << (russianLanguage ? "Количество совпавших словарных и возможных слов:                      " 
+	                         : "Number of matched dictionary and possible words:                      ") 
+							 << setw(8) << matchedWords.size() << endl << endl;
+
+	for (unsigned int i = 0; i < matchedWords.size(); i++) {
+		cout << matchedWords[i] << endl;
+	}
+	cout << endl;
 }
 
 
@@ -208,54 +261,114 @@ bool comparator(const string &a, const string &b)
 }
 
 
-int main()
+void calculate()
 {
-	SetConsoleCP(1251);
-	SetConsoleOutputCP(1251);
-	
-
-	fstream vocabularyFile("dictionary.txt");
-	const unsigned int vocabularySize = 56255;
-	unsigned int vocabularyWordsSize = 0;
-	
-	for (unsigned int i = 0; i < vocabularySize; i++) {
-		string t;
-		vocabularyFile >> t;
-		int size = t.size();
-		if (size >= minLength && size <= maxLength) {
-			vocabularyWords->insert(t);
-			vocabularyWordsSize++;
-		}
-	}
-	
-
-	input();
-
-	cout << "\n\n";
-	
 	vector<string> possibleWords = findAllPossibleWords();
 	vector<string> matchedWords;
-
-	unsigned int possibleWordsSize = possibleWords.size();
-	
-	for (unsigned int i = 0; i < possibleWordsSize; i++) {
+	for (unsigned int i = 0; i < possibleWords.size(); i++) {
 		if (vocabularyWords->findWord(possibleWords[i])) {
 			matchedWords.push_back(possibleWords[i]);
 		}
 	}
-	
-	
-	unsigned int matchedWordsSize = matchedWords.size();
-	
-	cout << "Количество словарных слов, подходящих под условия длины: " << setw(8) << vocabularyWordsSize << endl;
-	cout << "Количество возможных слов в таблице:                     " << setw(8) << possibleWordsSize << endl;
-	cout << "Количество совпавших словарных и возможных слов:         " << setw(8) << matchedWordsSize << endl << endl;
-
 	sort(matchedWords.begin(), matchedWords.end(), comparator);
-
-	for (unsigned int i = 0; i < matchedWordsSize; i++) {
-		cout << matchedWords[i] << endl;
-	}
-
-	return 0;
+	outputResult(matchedWords, possibleWords);
 }
+
+
+void inputTable()
+{
+	cout << endl << (russianLanguage ? "Введите количество строк: " 
+	                                 : "Enter the number of lines: ");
+	cin >> n;
+	cout << (russianLanguage ? "Введите количество столбцов: " 
+	                         : "Enter the number of columns: ");
+	cin >> m;
+
+	matrix = new string[n];
+
+	cout << (russianLanguage ? "Вводите буквы (строка пишется без пробелов)" 
+	                         : "Enter letters (the string is written without spaces)") << endl << endl;
+	for (unsigned int i = 0; i < n; i++) {
+		cin >> matrix[i];
+	}
+	cout << endl;
+}
+
+
+void changeMinAndMaxWordLength()
+{
+	unsigned int t;
+	cout << (russianLanguage ? "Введите минимальную длину слова: " 
+                             : "Enter the minimum word length: ");
+	if (!(cin >> t)) {
+        cin.clear();
+        cin.sync();
+        t = minLength;
+    } else {
+    	minLength = t;
+	}
+	cout << (russianLanguage ? "Введите максимальную длину слова: " 
+                             : "Enter the maximum word length: ");
+	if (!(cin >> t)) {
+        cin.clear();
+        cin.sync();
+        t = maxLength;
+    } else {
+    	maxLength = t;
+	}
+}
+
+
+void printMenu()
+{
+	system("cls");
+	cout << (russianLanguage ? "Меню" 
+	                         : "Menu") << endl;
+	cout << (russianLanguage ? "1. Ввод таблицы букв" 
+	                         : "1. Entering a table of letters") << endl;
+	cout << (russianLanguage ? "2. Выбор другого файла-словаря" 
+	                         : "2. Selecting another dictionary file") << endl;
+	cout << (russianLanguage ? "3. Смена языка" 
+	                         : "3. Language change") << endl;
+	cout << (russianLanguage ? "4. Изменить диапазон длин слов"
+	                         : "4. Change default length range of words") << endl;
+	cout << (russianLanguage ? "5. Выход" 
+	                         : "5. Exit") << endl;
+	cout << (russianLanguage ? "Выберите пункт меню: " 
+	                         : "Select menu item: ");
+}
+
+
+void menu()
+{
+	unsigned int k = 0;
+	bool flag = false;
+	while (!flag) {
+		printMenu();
+		if (!(cin >> k)) {
+	        cin.clear();
+	        cin.sync();
+	        k = 0;
+	    }
+	    switch (k) {
+	    	case 1:
+	    		inputTable();
+	    		calculate();
+	    		system("pause");
+	    		break;
+	    	case 2: 
+	    		changeDictionary();
+	    		break;
+	    	case 3:
+	    		russianLanguage = !russianLanguage;
+	    		break;
+	    	case 4:	
+	    		changeMinAndMaxWordLength();
+	    		break;
+	    	case 5:
+	    		flag = true;
+				break;	
+		}
+	}
+}
+
