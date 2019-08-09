@@ -4,9 +4,11 @@
 #include <algorithm>
 #include <iomanip>
 #include <map>
+#include <chrono>
 #include <windows.h>
 
-using namespace std;						   
+
+using namespace std;
 
 
 vector<string> findAllPossibleWords();
@@ -21,39 +23,35 @@ void printMenu();
 void menu();
 
 
+class Timer
+{
+public:
+	Timer() { reset(); } 
+	void reset() { start = chrono::high_resolution_clock::now(); }
+	unsigned long long elapsedNanoseconds() const
+	{
+		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();
+	}
+	
+private:
+	chrono::time_point<chrono::high_resolution_clock> start;
+};
+
+
 class Trie
 {
 public:
-	
-	Trie()
-	{
-		root = new Node();
-	}
-	
-	void insert(string word)
-	{
-		root->insert(word, word.size(), 0);
-	}
-	
-	bool findSubstr(string substr)
-	{
-		return root->findSubstr(substr, substr.size(), 0);
-	}
-	
-	bool findWord(string word)
-	{
-		return root->findWord(word, word.size(), 0);
-	}
+	Trie() { root = new Node(); }
+	void insert(string word) { root->insert(word, word.size(), 0); }
+	bool findSubstr(string substr) { return root->findSubstr(substr, substr.size(), 0); }
+	bool findWord(string word) { return root->findWord(word, word.size(), 0); }
 	
 private:
 	
 	class Node 
 	{
 	public:	
-		Node(bool wholeWord = false)
-		{
-			this->wholeWord = wholeWord;
-		}
+		Node(bool wholeWord = false) { this->wholeWord = wholeWord; }
 		
 		void insert(string str, unsigned int size, unsigned int index)
 		{
@@ -102,7 +100,6 @@ private:
 	};
 	
 	Node* root;
-	
 };
 
 
@@ -111,7 +108,7 @@ const int dy[] = { 0, 0, 1, -1 };
 
 unsigned int n;
 unsigned int m;
-string* matrix;
+char** matrix;
 
 unsigned int minLength = 4;
 unsigned int maxLength = 10;
@@ -121,6 +118,8 @@ unsigned int vocabularyWordsSize;
 
 bool russianLanguage = true;
 const string defaultFilename = "dictionary.txt";
+
+unsigned long long calculationTimeInNanoseconds;
 
 
 int main()
@@ -143,7 +142,12 @@ vector<string> findAllPossibleWords()
 	for (unsigned int i = 0; i < n; i++) {
 		mask[i] = new bool[m];
 		for (unsigned int j = 0; j < m; j++) {
-			mask[i][j] = false;
+			
+			if (matrix[i][j] == ' ') {
+				mask[i][j] = true;
+			} else {
+				mask[i][j] = false;
+			}
 		}
 	}
 	
@@ -235,15 +239,18 @@ void changeDictionary()
 
 void outputResult(vector<string> matchedWords, vector<string> possibleWords)
 {
+	cout << (russianLanguage ? "Время расчёта (микросекунды):                                         "
+	                         : "Calculation time (microseconds):                                      " )
+	                         << setw(14) << static_cast<double>(calculationTimeInNanoseconds / 1000.0) << endl << endl;
 	cout << (russianLanguage ? "Количество словарных слов, подходящих под условия длины:              "
 		                     : "The number of vocabulary words that fit the conditions of the length: ") 
-							 << setw(8) << vocabularyWordsSize << endl;
+							 << setw(14) << vocabularyWordsSize << endl;
 	cout << (russianLanguage ? "Количество возможных слов в таблице:                                  " 
 							 : "Number of possible words in the table:                                ") 
-							 << setw(8) << possibleWords.size() << endl;
+							 << setw(14) << possibleWords.size() << endl;
 	cout << (russianLanguage ? "Количество совпавших словарных и возможных слов:                      " 
 	                         : "Number of matched dictionary and possible words:                      ") 
-							 << setw(8) << matchedWords.size() << endl << endl;
+							 << setw(14) << matchedWords.size() << endl << endl;
 
 	for (unsigned int i = 0; i < matchedWords.size(); i++) {
 		cout << matchedWords[i] << endl;
@@ -254,15 +261,19 @@ void outputResult(vector<string> matchedWords, vector<string> possibleWords)
 
 bool comparator(const string &a, const string &b)
 {
-    if (a.size() > b.size()) {
-    	return true;
+	if (a.size() > b.size()) {
+		return true;
+	} else if (a.size() < b.size()) {
+		return false;
+	} else {
+		return a > b;
 	}
-    return false;
 }
 
 
 void calculate()
 {
+	Timer timer;
 	vector<string> possibleWords = findAllPossibleWords();
 	vector<string> matchedWords;
 	for (unsigned int i = 0; i < possibleWords.size(); i++) {
@@ -271,6 +282,8 @@ void calculate()
 		}
 	}
 	sort(matchedWords.begin(), matchedWords.end(), comparator);
+	matchedWords.resize(unique(matchedWords.begin(), matchedWords.end()) - matchedWords.begin());
+	calculationTimeInNanoseconds = timer.elapsedNanoseconds();
 	outputResult(matchedWords, possibleWords);
 }
 
@@ -284,12 +297,17 @@ void inputTable()
 	                         : "Enter the number of columns: ");
 	cin >> m;
 
-	matrix = new string[n];
+	matrix = new char*[n];
+	for (unsigned int i = 0; i < n; i++) {
+		matrix[i] = new char[m];
+	}
 
 	cout << (russianLanguage ? "Вводите буквы (строка пишется без пробелов)" 
 	                         : "Enter letters (the string is written without spaces)") << endl << endl;
+	
+	cin.ignore();
 	for (unsigned int i = 0; i < n; i++) {
-		cin >> matrix[i];
+		cin.getline(matrix[i], m + 1, '\n');
 	}
 	cout << endl;
 }
