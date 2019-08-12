@@ -1,6 +1,9 @@
+#ifndef BITSET_H
+#define BITSET_H
+
+
 #include <iostream>
-#include <bitset>
-#include <vector>
+
 
 using namespace std;
 
@@ -26,6 +29,7 @@ public:
 		}
 	}
 	
+	
 	Bitset(unsigned int nBits, bool** a, unsigned int n, unsigned int m) : Bitset(nBits)
 	{
 		unsigned int typesize = sizeof(T) * 8;
@@ -50,6 +54,7 @@ public:
 			}
 		}
 	}
+	
 
 	Bitset(const Bitset<T>& b) : Bitset(b.nBits)
 	{
@@ -58,10 +63,12 @@ public:
 		}
 	}
 	
+	
 	~Bitset()
 	{
 		delete[] data;
 	}
+	
 	
 	Bitset& operator&= (const Bitset& b) 
 	{
@@ -71,6 +78,7 @@ public:
 		return *this;
 	}
 	
+	
 	Bitset& operator|= (const Bitset& b) 
 	{
 		for (unsigned int i = 0; i < this->count; i++) {
@@ -79,20 +87,6 @@ public:
 		return *this;
 	}
 	
-	Bitset& operator^= (const Bitset& b) 
-	{
-		for (unsigned int i = 0; i < this->count; i++) {
-			this->data[i] ^= b.data[i];
-		}
-		return *this;
-	}
-	
-	Bitset operator| (const Bitset& b) 
-	{
-		Bitset<T> temp(*this);
-		temp |= b;
-		return temp;
-	}
 	
 	Bitset operator& (const Bitset& b) 
 	{
@@ -108,6 +102,7 @@ public:
 		return (data[p.first] & p.second) != 0;
 	}
 	
+	
 	void set(const unsigned int index, const bool value) 
 	{
 		pair<unsigned int, T> p = getMaskByIndex(index);
@@ -117,6 +112,7 @@ public:
 			data[p.first] &= ~p.second;
 		}
 	}
+	
 	
     bool isAllTrue() const
     {
@@ -128,6 +124,7 @@ public:
 		return ~(data[count - 1] | lastmask) == 0;
 	}
 	
+	
 	bool isAllFalse() const
     {
     	for (unsigned int i = 0; i < count; i++) {
@@ -138,11 +135,12 @@ public:
 		return true;
 	}
 	
-//private:
+	
+private:
 	unsigned int nBits;
 	unsigned int count;
-	T lastmask;
 	T* data;
+	T lastmask;
 	
 	pair<unsigned int, T> getMaskByIndex(const unsigned int index) const
 	{
@@ -157,64 +155,4 @@ public:
 	}
 };
 
-
-int main()
-{
-	
-	bool t[8][8] = {{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,1,1},{0,0,0,0,0,0,1,1},{0,0,0,0,1,1,1,0},{0,0,0,0,1,1,1,0},{0,0,0,0,0,0,0,0}};
-	
-	bool** mask = new bool*[8];
-	for (unsigned int i = 0; i < 8; i++) {
-		mask[i] = new bool[8];
-		for (unsigned int j = 0; j < 8; j++) {
-			mask[i][j] = t[i][j];
-		}
-	}
-	
-	Bitset<char> b(64, mask, 8, 8);
-	cout << "\n------------------------\n";
-	for (unsigned int i = 0; i < b.count; i++) {
-		cout << bitset<8>(b.data[i]) << endl;
-	}
-	Bitset<char> a(b);
-	b.data[5] = 0;
-	for (unsigned int i = 0; i < a.count; i++) {
-		cout << bitset<8>(a.data[i]) << endl;
-	}
-	
-	for (unsigned int i = 0; i < b.count; i++) {
-		cout << bitset<8>(b.data[i]) << endl;
-	}
-	Bitset<char> c = b | a;
-	
-	for (unsigned int i = 0; i < c.count; i++) {
-		cout << bitset<8>(c.data[i]) << endl;
-	}
-	cout << b.isAllTrue() << endl;
-	
-	
-	Bitset<unsigned long long> d(65);
-	d.data[0] = ~d.data[0];
-	d.data[1]++;
-	cout << "what? " << d.isAllTrue() << endl;
-	cout << "0    " << bitset<64>(d.data[0]) << endl;
-	cout << "1    " << bitset<64>(d.data[1]) << endl;
-	cout << "mask " << bitset<64>(d.lastmask) << endl;
-	
-	cout << "\nbit    " << d[4] << endl;
-	d.set(4, false);
-	cout << "bit2   " << d[4] << endl;
-	d.set(4, true);
-	cout << "what2? " << d.isAllTrue() << endl;
-	
-	vector<Bitset<char>> v;
-	v.push_back(c);
-	v.push_back(b);
-	v.push_back(a);
-	v.push_back(c);
-	v.push_back(b);
-	v.push_back(a);
-	
-	
-	return 0;
-}
+#endif

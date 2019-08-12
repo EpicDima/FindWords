@@ -1,8 +1,9 @@
+#include "../Bitset.h"
+#include "../Timer.h"
+
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <fstream>
-#include <chrono>
 
 using namespace std;
 
@@ -88,149 +89,8 @@ bool masks[74][8][8] = {{{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{
 						{{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,1,1},{0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}}};
 
 
-ofstream file("test1+2.txt", ios_base::out | ios_base::trunc);
-
-
-template <typename T>
-class Bitset
-{
-public:
-	Bitset(unsigned int nBits)
-	{
-		this->nBits = nBits; 
-		unsigned int typesize = sizeof(T) * 8;
-		count = static_cast<unsigned int>(nBits / typesize);
-		lastmask = 0;
-		unsigned int difference = nBits % typesize;
-		if (difference != 0) {
-			count++;
-			lastmask = ~((~lastmask) >> (typesize - difference));
-		}
-		data = new T[count];
-		for (unsigned int i = 0; i < count; i++) {
-			data[i] = 0;
-		}
-	}
-	
-	Bitset(unsigned int nBits, bool** a, unsigned int n, unsigned int m) : Bitset(nBits)
-	{
-		unsigned int typesize = sizeof(T) * 8;
-		T mask = 1;
-		unsigned int k = 0;
-		for (unsigned int i = 0; i < n; i++) {
-			for (unsigned int j = 0; j < m; j++) {
-				unsigned int t = i * n + j;
-				if (t % typesize == 0 && t != 0) {
-					k++;
-					if (k == count) {
-						throw logic_error("Не хватает памяти для такого числа элементов");
-					}
-					mask = 1;
-				}
-				if (a[i][j]) {
-					data[k] |= mask;
-				} else {
-					data[k] &= ~mask;
-				}
-				mask <<= 1;
-			}
-		}
-	}
-
-	Bitset(const Bitset<T>& b) : Bitset(b.nBits)
-	{
-		for (unsigned int i = 0; i < count; i++) {
-			this->data[i] = b.data[i];
-		}
-	}
-	
-	~Bitset()
-	{
-		delete[] data;
-	}
-	
-	Bitset& operator&= (const Bitset& b) 
-	{
-		for (unsigned int i = 0; i < this->count; i++) {
-			this->data[i] &= b.data[i];
-		}
-		return *this;
-	}
-	
-	Bitset& operator|= (const Bitset& b) 
-	{
-		for (unsigned int i = 0; i < this->count; i++) {
-			this->data[i] |= b.data[i];
-		}
-		return *this;
-	}
-	
-	Bitset operator& (const Bitset& b) 
-	{
-		Bitset<T> temp(*this);
-		temp &= b;
-		return temp;
-	}
-	
-	
-	bool operator[] (const unsigned int index) const
-	{
-		pair<unsigned int, T> p = getMaskByIndex(index);
-		return (data[p.first] & p.second) != 0;
-	}
-	
-	void set(const unsigned int index, const bool value) 
-	{
-		pair<unsigned int, T> p = getMaskByIndex(index);
-		if (value) {
-			data[p.first] |= p.second;
-		} else {
-			data[p.first] &= ~p.second;
-		}
-	}
-	
-    bool isAllTrue() const
-    {
-    	for (unsigned int i = 0; i < (count - 1); i++) {
-			if (~data[i] != 0) {
-				return false;
-			}
-		}
-		return ~(data[count - 1] | lastmask) == 0;
-	}
-	
-	bool isAllFalse() const
-    {
-    	for (unsigned int i = 0; i < count; i++) {
-			if (data[i] != 0) {
-				return false;
-			}
-		}
-		return true;
-	}
-	
-private:
-	unsigned int nBits;
-	unsigned int count;
-	T* data;
-	T lastmask;
-	
-	pair<unsigned int, T> getMaskByIndex(const unsigned int index) const
-	{
-		unsigned int typesize = sizeof(T) * 8;
-		unsigned int typeindex = static_cast<unsigned int>(index / typesize);
-		if (typeindex >= count) {
-			throw logic_error("Индекс вне границы массива");
-		}
-		T mask = 1;
-		mask <<= (index % typesize);
-		return make_pair(typeindex, mask);
-	}
-};
-
-
 vector<Bitset<unsigned long long>> bitsetMasks;
-
+vector<Bitset<unsigned long long>> results;
 
 template<typename T>
 void f(Bitset<T> &mask, Bitset<T> indexes, unsigned int start)
@@ -241,12 +101,8 @@ void f(Bitset<T> &mask, Bitset<T> indexes, unsigned int start)
 			temp |= bitsetMasks[i];
 			
 			if (temp.isAllTrue()) {
-				for (unsigned int j = 0; j < size; j++) {
-					if (indexes[j]) {
-						file << setw(3) << j;
-					}
-				}
-				file << setw(3) << i << "\n";
+				indexes.set(i, true);
+				results.push_back(indexes);
 				return;
 			}
 			
@@ -267,22 +123,17 @@ void ffff(unsigned int x0, unsigned int y0)
 			f(bitsetMasks[i], indexes, 0);
 		}
 	}
+	for (unsigned int i = 0; i < results.size(); i++) {
+		for (unsigned int j = 0; j < size; j++) {
+			if (results[i][j]) {
+				cout << setw(3) << j;
+			}
+		}
+		cout << endl;
+	}
 }
 
 
-class Timer
-{
-public:
-	Timer() { reset(); } 
-	void reset() { start = chrono::high_resolution_clock::now(); }
-	unsigned long long elapsedNanoseconds() const
-	{
-		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();
-	}
-	
-private:
-	chrono::time_point<chrono::high_resolution_clock> start;
-};
 
 
 int main()
@@ -331,7 +182,7 @@ int main()
 	ffff(xMin, yMin);
 	
 	unsigned long long calculationTimeInNanoseconds = timer.elapsedNanoseconds();
-	cout << "Nanoseconds:   " << calculationTimeInNanoseconds << endl << endl;
+	cout << "\nNanoseconds:   " << calculationTimeInNanoseconds << endl << endl;
 	cout << "Microseconds:  " << static_cast<double>(calculationTimeInNanoseconds / 1000.0) << endl << endl;
 	cout << "Milliseconds:  " << static_cast<double>(calculationTimeInNanoseconds / 1000000.0) << endl << endl;
 	
