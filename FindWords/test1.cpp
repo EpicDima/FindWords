@@ -88,7 +88,6 @@ bool masks[74][8][8] = {{{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{
 
 ofstream file("test1.txt", ios_base::out | ios_base::trunc);
 
-// нужен класс для работы с битами, но чтобы побитовые операции были быстрыми, то есть внутри него будет массив интов
 
 void f(bool** mask, vector<unsigned int> indexes, vector<unsigned int> unusefulIndexes)
 {	
@@ -141,7 +140,7 @@ void f(bool** mask, vector<unsigned int> indexes, vector<unsigned int> unusefulI
 						for (unsigned int i = 0; i < indexes.size(); i++) {
 							file << setw(3) << indexes[i];
 						}
-						file << "\n";
+						file << setw(3) << k << "\n";
 						return;
 					}
 					
