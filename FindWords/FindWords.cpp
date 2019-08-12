@@ -11,12 +11,12 @@
 using namespace std;
 
 
-vector<string> findAllPossibleWords();
-vector<string> f(string word, int x, int y, bool** mask);
+vector<pair<string, bool**>> findAllPossibleWords();
+vector<pair<string, bool**>> f(string word, int x, int y, bool** mask);
 void openDictionary(string filename);
 void changeDictionary();
-void outputResult(vector<string> matchedWords, vector<string> possibleWords);
-bool comparator(const string &a, const string &b);
+void outputResult(vector<pair<string, bool**>> matchedWords, vector<pair<string, bool**>> possibleWords);
+bool comparator(const pair<string, bool**> &a, const pair<string, bool**> &b);
 void calculate();
 void inputTable();
 void printMenu();
@@ -134,20 +134,15 @@ int main()
 }
 
 
-vector<string> findAllPossibleWords()
+vector<pair<string, bool**>> findAllPossibleWords()
 {
-	vector<string> a;
+	vector<pair<string, bool**>> a;
 
 	bool** mask = new bool* [n];
 	for (unsigned int i = 0; i < n; i++) {
 		mask[i] = new bool[m];
 		for (unsigned int j = 0; j < m; j++) {
-			
-			if (matrix[i][j] == ' ') {
-				mask[i][j] = true;
-			} else {
-				mask[i][j] = false;
-			}
+			mask[i][j] = (matrix[i][j] == ' ');
 		}
 	}
 	
@@ -155,44 +150,60 @@ vector<string> findAllPossibleWords()
 		for (unsigned int j = 0; j < m; j++) {
 			if (!mask[i][j]) {
 				mask[i][j] = true;
-				vector<string> q = f(string(1, matrix[i][j]), i, j, mask);
-				for (int h = 0; h < q.size(); h++) {
+				vector<pair<string, bool**>> q = f(string(1, matrix[i][j]), i, j, mask);
+				mask[i][j] = false;
+				for (unsigned int h = 0; h < q.size(); h++) {
+					for (unsigned int k = 0; k < n; k++) {
+						for (unsigned int g = 0; g < n; g++) {
+							q[h].second[k][g] -= mask[k][g];
+						}
+					}
 					a.push_back(q[h]);
 				}
-				mask[i][j] = false;
 			}
 		}
 	}
+	
+	for (unsigned int i = 0; i < n; i++) {
+		delete[] mask[i];
+	}
+	delete[] mask;
 
 	return a;
 }
 
 
-vector<string> f(string word, int x, int y, bool** mask)
+vector<pair<string, bool**>> f(string word, int x, int y, bool** mask)
 {
-	vector<string> newWords;
+	vector<pair<string, bool**>> newWords;
 	
 	if (word.size() >= minLength) {
-		newWords.push_back(word);
+		bool** tempMask = new bool*[n];
+		for (unsigned int i = 0; i < n; i++) {
+			tempMask[i] = new bool[m];
+			for (unsigned int j = 0; j < m; j++) {
+				tempMask[i][j] = mask[i][j];
+			}
+		}
+		newWords.push_back(make_pair(word, tempMask));
 	}
 	
 	if (word.size() >= maxLength || !vocabularyWords->findSubstr(word)) {
 		return newWords;
 	}
 	
-	int x2;
-	int y2;
+	int x2, y2;
 	
 	bool** mask2 = new bool*[n];
-	for (unsigned int j = 0; j < n; j++) {
-		mask2[j] = new bool[m];
-		for (unsigned int h = 0; h < m; h++) {
-			mask2[j][h] = mask[j][h];
+	for (unsigned int i = 0; i < n; i++) {
+		mask2[i] = new bool[m];
+		for (unsigned int j = 0; j < m; j++) {
+			mask2[i][j] = mask[i][j];
 		}
 	}
 	
 	string word2;
-	vector<string> temp;
+	vector<pair<string, bool**>> temp; 
 	
 	for (unsigned int i = 0; i < 4; i++) {
 		x2 = x + dx[i];
@@ -202,13 +213,18 @@ vector<string> f(string word, int x, int y, bool** mask)
 				mask2[x2][y2] = true;
 				word2 = word + matrix[x2][y2];
 				temp = f(word2, x2, y2, mask2);
-				for (unsigned int i = 0; i < temp.size(); i++) {
-					newWords.push_back(temp[i]);
+				for (unsigned int j = 0; j < temp.size(); j++) {
+					newWords.push_back(temp[j]);
 				}
 				mask2[x2][y2] = false;
 			}
 		}
 	}
+	
+	for (unsigned int i = 0; i < n; i++) {
+		delete[] mask2[i];
+	}
+	delete[] mask2;
 
 	return newWords;
 }
@@ -237,7 +253,7 @@ void changeDictionary()
 }
 
 
-void outputResult(vector<string> matchedWords, vector<string> possibleWords)
+void outputResult(vector<pair<string, bool**>> matchedWords, vector<pair<string, bool**>> possibleWords)
 {
 	cout << (russianLanguage ? "Время расчёта (микросекунды):                                         "
 	                         : "Calculation time (microseconds):                                      " )
@@ -253,17 +269,44 @@ void outputResult(vector<string> matchedWords, vector<string> possibleWords)
 							 << setw(14) << matchedWords.size() << endl << endl;
 
 	for (unsigned int i = 0; i < matchedWords.size(); i++) {
-		cout << matchedWords[i] << endl;
+		cout << matchedWords[i].first << endl;
 	}
 	cout << endl;
+	
+	
+	int** mask = new int*[n];
+	for (unsigned int i = 0; i < n; i++) {
+		mask[i] = new int[m];
+		for (unsigned int j = 0; j < m; j++) {
+			mask[i][j] = 0;
+		}
+	}
+	
+	for (unsigned int i = 0; i < matchedWords.size(); i++) {
+		for (unsigned int j = 0; j < n; j++) {
+			for (unsigned int k = 0; k < m; k++) {
+				cout << matchedWords[i].second[j][k];
+				mask[j][k] += matchedWords[i].second[j][k];
+			}
+			cout << endl;
+		}
+		cout << endl;
+	}
+	cout << "---------------------------------------------\n\n";
+	for (unsigned int j = 0; j < n; j++) {
+		for (unsigned int k = 0; k < m; k++) {
+			cout << setw(3) << mask[j][k];
+		}
+		cout << endl;
+	}
 }
 
 
-bool comparator(const string &a, const string &b)
+bool comparator(const pair<string, bool**> &a, const pair<string, bool**> &b)
 {
-	if (a.size() > b.size()) {
+	if (a.first.size() > b.first.size()) {
 		return true;
-	} else if (a.size() < b.size()) {
+	} else if (a.first.size() < b.first.size()) {
 		return false;
 	} else {
 		return a > b;
@@ -274,10 +317,10 @@ bool comparator(const string &a, const string &b)
 void calculate()
 {
 	Timer timer;
-	vector<string> possibleWords = findAllPossibleWords();
-	vector<string> matchedWords;
+	vector<pair<string, bool**>> possibleWords = findAllPossibleWords();
+	vector<pair<string, bool**>> matchedWords;
 	for (unsigned int i = 0; i < possibleWords.size(); i++) {
-		if (vocabularyWords->findWord(possibleWords[i])) {
+		if (vocabularyWords->findWord(possibleWords[i].first)) {
 			matchedWords.push_back(possibleWords[i]);
 		}
 	}
