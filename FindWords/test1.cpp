@@ -86,7 +86,7 @@ bool masks[74][8][8] = {{{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{
 						{{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,1,1},{0,0,0,0,0,0,1,1},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0},{0,0,0,0,0,0,0,0}}};
 
 
-ofstream file("test.txt", ios_base::out | ios_base::trunc);
+ofstream file("test1.txt", ios_base::out | ios_base::trunc);
 
 // нужен класс для работы с битами, но чтобы побитовые операции были быстрыми, то есть внутри него будет массив интов
 
@@ -183,7 +183,10 @@ void ffff(unsigned int x0, unsigned int y0)
 }
 
 
-
+void p(vector<int> a)
+{
+	cout << a[1] << endl;
+}
 
 
 int main()
@@ -224,6 +227,7 @@ int main()
 	cout << endl << xMin << endl << yMin << endl << endl;
 	
 	ffff(xMin, yMin);
+
 	
 	return 0;
 } 
