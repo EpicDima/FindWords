@@ -1,107 +1,37 @@
+#include "Trie.h"
+#include "Timer.h"
+#include "BitMask.h"
+#include "Bitset.h"
+
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <algorithm>
 #include <iomanip>
-#include <map>
-#include <chrono>
 #include <windows.h>
 
 
 using namespace std;
 
 
-vector<string> findAllPossibleWords();
-vector<string> f(string word, int x, int y, bool** mask);
+vector<pair<string, BitMask>> findAllPossibleWords();
+vector<pair<string, BitMask>> f(string word, int x, int y, BitMask mask);
 void openDictionary(string filename);
 void changeDictionary();
-void outputResult(vector<string> matchedWords, vector<string> possibleWords);
+void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string, BitMask>> possibleWords);
+void colorPrint(string s, WORD attribute);
+void outputMatrix(vector<pair<string, BitMask>> matchedWords);
 bool comparator(const string &a, const string &b);
+template<typename T>
+void f2(Bitset<T> &mask, Bitset<T> indexes, unsigned int start);
+void ffff(vector<pair<string, BitMask>> matchedWords);
 void calculate();
 void inputTable();
 void printMenu();
 void menu();
 
 
-class Timer
-{
-public:
-	Timer() { reset(); } 
-	void reset() { start = chrono::high_resolution_clock::now(); }
-	unsigned long long elapsedNanoseconds() const
-	{
-		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();
-	}
-	
-private:
-	chrono::time_point<chrono::high_resolution_clock> start;
-};
-
-
-class Trie
-{
-public:
-	Trie() { root = new Node(); }
-	void insert(string word) { root->insert(word, word.size(), 0); }
-	bool findSubstr(string substr) { return root->findSubstr(substr, substr.size(), 0); }
-	bool findWord(string word) { return root->findWord(word, word.size(), 0); }
-	
-private:
-	
-	class Node 
-	{
-	public:	
-		Node(bool wholeWord = false) { this->wholeWord = wholeWord; }
-		
-		void insert(string str, unsigned int size, unsigned int index)
-		{
-			if (letters.count(str[index])) {
-			    if (index < size - 1) {
-					this->letters.at(str[index])->insert(str, size, index + 1);
-				} else {
-					this->letters.at(str[index])->wholeWord = true;
-				}
-			} else {
-				if (index < size - 1) {
-					Node* node = new Node(false);
-					this->letters.insert(pair<char, Node*>(str[index], node));
-					node->insert(str, size, index + 1);
-				} else {
-					this->letters.insert(pair<char, Node*>(str[index], new Node(true)));
-				}
-			}
-		}
-		
-		bool findSubstr(string substr, unsigned int size, unsigned int index)
-		{
-			if (index == size) {
-				return true;
-			}
-			if (this->letters.count(substr[index])) {
-				return this->letters.at(substr[index])->findSubstr(substr, size, index + 1);
-			}
-			return false;
-		}
-		
-		bool findWord(string word, unsigned int size, unsigned int index)
-		{
-			if (index == size && this->wholeWord) {
-				return true;
-			}
-			if (this->letters.count(word[index])) {
-				return this->letters.at(word[index])->findWord(word, size, index + 1);
-			}
-			return false;
-		}
-		
-	private:
-		map<char, Node*> letters;
-		bool wholeWord;
-	};
-	
-	Node* root;
-};
-
+WORD attributes[] = {FOREGROUND_RED, FOREGROUND_GREEN, FOREGROUND_BLUE, FOREGROUND_INTENSITY, BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE,  BACKGROUND_INTENSITY};	
 
 const int dx[] = { 1, -1, 0, 0 };
 const int dy[] = { 0, 0, 1, -1 };
@@ -121,6 +51,10 @@ const string defaultFilename = "dictionary.txt";
 
 unsigned long long calculationTimeInNanoseconds;
 
+vector<Bitset<unsigned long long>> bitsetMasks;
+vector<Bitset<unsigned long long>> results;
+unsigned int matchedWordsSize = 0;
+
 
 int main()
 {
@@ -134,20 +68,14 @@ int main()
 }
 
 
-vector<string> findAllPossibleWords()
+vector<pair<string, BitMask>> findAllPossibleWords()
 {
-	vector<string> a;
+	vector<pair<string, BitMask>> a;
 
-	bool** mask = new bool* [n];
+	BitMask mask(n, m);
 	for (unsigned int i = 0; i < n; i++) {
-		mask[i] = new bool[m];
 		for (unsigned int j = 0; j < m; j++) {
-			
-			if (matrix[i][j] == ' ') {
-				mask[i][j] = true;
-			} else {
-				mask[i][j] = false;
-			}
+			mask[i][j] = (matrix[i][j] == ' ');
 		}
 	}
 	
@@ -155,11 +83,16 @@ vector<string> findAllPossibleWords()
 		for (unsigned int j = 0; j < m; j++) {
 			if (!mask[i][j]) {
 				mask[i][j] = true;
-				vector<string> q = f(string(1, matrix[i][j]), i, j, mask);
-				for (int h = 0; h < q.size(); h++) {
+				vector<pair<string, BitMask>> q = f(string(1, matrix[i][j]), i, j, mask);
+				mask[i][j] = false;
+				for (unsigned int h = 0; h < q.size(); h++) {
+					for (unsigned int k = 0; k < n; k++) {
+						for (unsigned int g = 0; g < n; g++) {
+							q[h].second[k][g] -= mask[k][g];
+						}
+					}
 					a.push_back(q[h]);
 				}
-				mask[i][j] = false;
 			}
 		}
 	}
@@ -168,31 +101,24 @@ vector<string> findAllPossibleWords()
 }
 
 
-vector<string> f(string word, int x, int y, bool** mask)
+vector<pair<string, BitMask>> f(string word, int x, int y, BitMask mask)
 {
-	vector<string> newWords;
+	vector<pair<string, BitMask>> newWords;
 	
 	if (word.size() >= minLength) {
-		newWords.push_back(word);
+		newWords.push_back(make_pair(word, mask));
 	}
 	
 	if (word.size() >= maxLength || !vocabularyWords->findSubstr(word)) {
 		return newWords;
 	}
 	
-	int x2;
-	int y2;
+	int x2, y2;
 	
-	bool** mask2 = new bool*[n];
-	for (unsigned int j = 0; j < n; j++) {
-		mask2[j] = new bool[m];
-		for (unsigned int h = 0; h < m; h++) {
-			mask2[j][h] = mask[j][h];
-		}
-	}
+	BitMask mask2(mask);
 	
 	string word2;
-	vector<string> temp;
+	vector<pair<string, BitMask>> temp; 
 	
 	for (unsigned int i = 0; i < 4; i++) {
 		x2 = x + dx[i];
@@ -202,14 +128,13 @@ vector<string> f(string word, int x, int y, bool** mask)
 				mask2[x2][y2] = true;
 				word2 = word + matrix[x2][y2];
 				temp = f(word2, x2, y2, mask2);
-				for (unsigned int i = 0; i < temp.size(); i++) {
-					newWords.push_back(temp[i]);
+				for (unsigned int j = 0; j < temp.size(); j++) {
+					newWords.push_back(temp[j]);
 				}
 				mask2[x2][y2] = false;
 			}
 		}
 	}
-
 	return newWords;
 }
 
@@ -237,11 +162,12 @@ void changeDictionary()
 }
 
 
-void outputResult(vector<string> matchedWords, vector<string> possibleWords)
+
+void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string, BitMask>> possibleWords)
 {
-	cout << (russianLanguage ? "Время расчёта (микросекунды):                                         "
-	                         : "Calculation time (microseconds):                                      " )
-	                         << setw(14) << static_cast<double>(calculationTimeInNanoseconds / 1000.0) << endl << endl;
+	cout << (russianLanguage ? "Время расчёта (миллисекунды):                                         "
+	                         : "Calculation time (milliseconds):                                      " )
+	                         << setw(14) << static_cast<double>(calculationTimeInNanoseconds / 1000000.0) << endl << endl;
 	cout << (russianLanguage ? "Количество словарных слов, подходящих под условия длины:              "
 		                     : "The number of vocabulary words that fit the conditions of the length: ") 
 							 << setw(14) << vocabularyWordsSize << endl;
@@ -250,12 +176,81 @@ void outputResult(vector<string> matchedWords, vector<string> possibleWords)
 							 << setw(14) << possibleWords.size() << endl;
 	cout << (russianLanguage ? "Количество совпавших словарных и возможных слов:                      " 
 	                         : "Number of matched dictionary and possible words:                      ") 
-							 << setw(14) << matchedWords.size() << endl << endl;
+							 << setw(14) << matchedWords.size() << endl;
+	outputMatrix(matchedWords);
+}
 
-	for (unsigned int i = 0; i < matchedWords.size(); i++) {
-		cout << matchedWords[i] << endl;
+
+void colorPrint(string s, WORD attribute)
+{
+	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(handle, attribute);
+	cout << s;
+}
+
+
+void outputMatrix(vector<pair<string, BitMask>> matchedWords)
+{
+	vector<string> words;
+	vector<vector<unsigned int>> v;
+	unsigned int max = 0;
+	for (unsigned int i = 0; i < results.size(); i++) {
+		unsigned int k = 0;
+		vector<unsigned int> temp;
+		for (unsigned int j = 0; j < n * m; j++) {
+			if (results[i][j]) {
+				temp.push_back(j);
+				words.push_back(matchedWords[j].first);
+				k++;
+			}
+		}
+		v.push_back(temp);
+		if (k > max) {
+			max = k;
+		}
 	}
-	cout << endl;
+	
+	sort(words.begin(), words.end(), comparator);
+	words.resize(unique(words.begin(), words.end()) - words.begin());
+	
+	cout << (russianLanguage ? "Количество совпавших слов, которые можно скомбинировать:              " 
+	                         : "Number of matched words that can be combined:                         ") 
+							 << setw(14) << words.size() << endl << endl;
+	
+	cout << "\n\n";
+	for (unsigned int i = 0; i < words.size(); i++) {
+		cout << words[i] << endl;
+	}
+	cout << "\n\n";
+	
+	WORD* attrs = new WORD[max];
+	unsigned int counter = 0;
+	for (unsigned int i = 0; i < 8; i++) {
+		for (unsigned int j = 0; j < 8; j++) {
+			for (unsigned int k = 0; k < 8; k++) {
+				if (counter >= max) {
+					break;
+				}
+				if (!(i % 4 == j % 4 || i % 4 == k % 4 || j % 4 == k % 4)) {
+					attrs[counter] = attributes[i] | attributes[j] | attributes[k];
+					counter++;
+				}
+			}
+		}
+	}
+	for (unsigned int h = 0; h < v.size(); h++) {
+		for (unsigned int i = 0; i < n; i++) {
+			for (unsigned int j = 0; j < m; j++) {
+				for (unsigned int k = 0; k < v[0].size(); k++) {
+					if (matchedWords[v[0][k]].second[i][j]) {
+						colorPrint(string(1, matrix[i][j]), attrs[k]);
+					}
+				}
+			}
+			cout << endl;
+		}
+		colorPrint("\n\n", FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	}
 }
 
 
@@ -271,20 +266,81 @@ bool comparator(const string &a, const string &b)
 }
 
 
+template<typename T>
+void f2(Bitset<T> &mask, Bitset<T> indexes, unsigned int start)
+{
+	for (unsigned int i = start; i < matchedWordsSize; i++) {
+		if ((mask & bitsetMasks[i]).isAllFalse()) {
+			Bitset<T> temp(mask);
+			temp |= bitsetMasks[i];
+			
+			if (temp.isAllTrue()) {
+				indexes.set(i, true);
+				results.push_back(indexes);
+				return;
+			}
+			
+			Bitset<T> tempIndexes(indexes);
+			tempIndexes.set(i, true);
+			f2(temp, tempIndexes, i);
+		}
+	}
+}
+
+
+
+void ffff(vector<pair<string, BitMask>> matchedWords)
+{
+	matchedWordsSize = matchedWords.size();	
+	for (unsigned int i = 0; i < matchedWordsSize; i++) {
+		bitsetMasks.push_back(Bitset<unsigned long long>(n * m, matchedWords[i].second.getRawMask(), n, m));
+	}
+	
+	
+	unsigned int min = 0, x0 = 0, y0 = 0;
+	min = ~min;
+	for (unsigned int i = 0; i < n; i++) {
+		for (unsigned int j = 0; j < m; j++) {
+			unsigned int s = 0;
+			for (unsigned int k = 0; k < matchedWordsSize; k++) {
+				s += matchedWords[k].second[i][j];
+			}
+			if (s < min) {
+				min = s;
+				x0 = i;
+				y0 = j;
+			}
+		}
+	}
+	
+	for (unsigned int i = 0; i < matchedWordsSize; i++) {
+		if (matchedWords[i].second[x0][y0]) {
+			Bitset<unsigned long long> indexes(matchedWordsSize);
+			indexes.set(i, true);
+			f2(bitsetMasks[i], indexes, 0);
+		}
+	}
+	matchedWordsSize = 0;
+}
+
+
 void calculate()
 {
 	Timer timer;
-	vector<string> possibleWords = findAllPossibleWords();
-	vector<string> matchedWords;
+	vector<pair<string, BitMask>> possibleWords = findAllPossibleWords();
+	vector<pair<string, BitMask>> matchedWords;
 	for (unsigned int i = 0; i < possibleWords.size(); i++) {
-		if (vocabularyWords->findWord(possibleWords[i])) {
+		if (vocabularyWords->findWord(possibleWords[i].first)) {
 			matchedWords.push_back(possibleWords[i]);
 		}
 	}
-	sort(matchedWords.begin(), matchedWords.end(), comparator);
-	matchedWords.resize(unique(matchedWords.begin(), matchedWords.end()) - matchedWords.begin());
+
+	ffff(matchedWords);
+
 	calculationTimeInNanoseconds = timer.elapsedNanoseconds();
 	outputResult(matchedWords, possibleWords);
+	
+	results.clear();
 }
 
 
