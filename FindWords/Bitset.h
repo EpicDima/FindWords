@@ -3,9 +3,10 @@
 
 
 #include <iostream>
-
+#include <cassert>
 
 using namespace std;
+
 
 
 template <typename T>
@@ -40,9 +41,7 @@ public:
 				unsigned int t = i * n + j;
 				if (t % typesize == 0 && t != 0) {
 					k++;
-					if (k == count) {
-						throw logic_error("Не хватает памяти для такого числа элементов");
-					}
+					assert(k < count);
 					mask = 1;
 				}
 				if (a[i][j]) {
@@ -146,9 +145,7 @@ private:
 	{
 		unsigned int typesize = sizeof(T) * 8;
 		unsigned int typeindex = static_cast<unsigned int>(index / typesize);
-		if (typeindex >= count) {
-			throw logic_error("Индекс вне границы массива");
-		}
+		assert(typeindex < count);
 		T mask = 1;
 		mask <<= (index % typesize);
 		return make_pair(typeindex, mask);

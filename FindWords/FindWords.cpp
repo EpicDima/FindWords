@@ -2,16 +2,15 @@
 #include "Timer.h"
 #include "BitMask.h"
 #include "Bitset.h"
+#include "FindWordsConstants.h"
+#include "Menu.h"
 
-#include <iostream>
 #include <fstream>
 #include <vector>
 #include <algorithm>
 #include <iomanip>
 #include <windows.h>
 
-
-using namespace std;
 
 
 vector<pair<string, BitMask>> findAllPossibleWords();
@@ -22,11 +21,12 @@ void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string
 void colorPrint(string s, WORD attribute);
 void outputMatrix(vector<pair<string, BitMask>> matchedWords);
 bool comparator(const string &a, const string &b);
-template<typename T>
-void f2(Bitset<T> &mask, Bitset<T> indexes, unsigned int start);
+template<typename T1>
+void f2(Bitset<T1> &mask, Bitset<T1> indexes, unsigned int start);
 void ffff(vector<pair<string, BitMask>> matchedWords);
 void calculate();
 void inputTable();
+void changeMinAndMaxWordLength();
 void printMenu();
 void menu();
 
@@ -56,13 +56,39 @@ vector<Bitset<unsigned long long>> results;
 unsigned int matchedWordsSize = 0;
 
 
+Menu* createMenu()
+{
+	function<void()> funcs[CONSTANTS::MenuItemsNumber] = {[]() { inputTable(); calculate(); }, 
+		changeDictionary, changeMinAndMaxWordLength,      []() { exit(0); } };
+		
+	MenuItem* items = new MenuItem[CONSTANTS::MenuItemsNumber];
+	for (unsigned int i = 0; i < CONSTANTS::MenuItemsNumber; i++) {
+		items[i] = MenuItem(CONSTANTS::MenuItemsStrings[i], CONSTANTS::LanguagesNumber, funcs[i]);
+	}
+	
+	BaseMenuItem auxItems[3];
+	for (unsigned int i = 0; i < CONSTANTS::AuxiliaryMenuItemsNumber; i++) {
+		auxItems[i] = BaseMenuItem(CONSTANTS::AuxiliaryMenuItemsStrings[i], CONSTANTS::LanguagesNumber);
+	}
+	Menu::AnotherMenuItems auxItemsStruct = { auxItems[0], auxItems[1], auxItems[2] };
+	
+	return new Menu(items, auxItemsStruct, CONSTANTS::MenuItemsNumber, CONSTANTS::LanguagesNumber);
+}
+
+
 int main()
 {
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 
 	openDictionary(defaultFilename);
-	menu();
+	Menu mainmenu = *createMenu();
+	mainmenu.draw();
+	while (true) {
+		mainmenu.click();
+	}
+	
+	//menu();
 
 	return 0;
 }
@@ -266,12 +292,12 @@ bool comparator(const string &a, const string &b)
 }
 
 
-template<typename T>
-void f2(Bitset<T> &mask, Bitset<T> indexes, unsigned int start)
+template<typename T1>
+void f2(Bitset<T1> &mask, Bitset<T1> indexes, unsigned int start)
 {
 	for (unsigned int i = start; i < matchedWordsSize; i++) {
 		if ((mask & bitsetMasks[i]).isAllFalse()) {
-			Bitset<T> temp(mask);
+			Bitset<T1> temp(mask);
 			temp |= bitsetMasks[i];
 			
 			if (temp.isAllTrue()) {
@@ -280,7 +306,7 @@ void f2(Bitset<T> &mask, Bitset<T> indexes, unsigned int start)
 				return;
 			}
 			
-			Bitset<T> tempIndexes(indexes);
+			Bitset<T1> tempIndexes(indexes);
 			tempIndexes.set(i, true);
 			f2(temp, tempIndexes, i);
 		}

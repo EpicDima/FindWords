@@ -5,25 +5,53 @@
 #include <string>
 #include <map>
 
-
 using namespace std;
+
 
 
 class Trie
 {
 public:
-	Trie() { root = new Node(); }
-	void insert(string word) { root->insert(word, word.size(), 0); }
-	bool findSubstr(string substr) { return root->findSubstr(substr, substr.size(), 0); }
-	bool findWord(string word) { return root->findWord(word, word.size(), 0); }
-	~Trie() { delete[] root; }
+	Trie()
+	{
+		root = new Node();
+	}
+	
+	
+	void insert(string word)
+	{
+		root->insert(word, word.size(), 0);
+	}
+	
+	
+	bool findSubstr(string substr)
+	{
+		return root->findSubstr(substr, substr.size(), 0);
+	}
+	
+	
+	bool findWord(string word)
+	{
+		return root->findWord(word, word.size(), 0);
+	}
+	
+	
+	~Trie()
+	{
+		delete root;
+	}
+	
 	
 private:
 	
 	class Node 
 	{
 	public:	
-		Node(bool wholeWord = false) { this->wholeWord = wholeWord; }
+		Node(bool wholeWord = false)
+		{
+			this->wholeWord = wholeWord;
+		}
+		
 		
 		void insert(string str, unsigned int size, unsigned int index)
 		{
@@ -67,6 +95,7 @@ private:
 			}
 			return false;
 		}
+		
 		
 	private:
 		map<char, Node*> letters;

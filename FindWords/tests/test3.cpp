@@ -1,111 +1,32 @@
-#include <iostream>
-#include <conio.h>
-#include <windows.h>
+#include "../Menu.h"
 
-using namespace std;
+#include <ctime>
 
 
+void f1() { cout << "\n---------1----------\n"; }
+void f2() { cout << "\n****2***\n"; }
+void f3() { cout << "\n+++++++++++3++++++\n"; }
+void f4() { cout << "\n@@@@@@@4@@@@@@@@@\n"; }
+void f5() { cout << "\n#########5######\n"; exit(0); }
 
 
 
+string strtime = "hellp";
 
 
-void setCursorOn(int x, int y)
+void cycle(Menu& menu)
 {
-	COORD xory;
-	xory.Y = y;
-	xory.X = x;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), xory);
+	int k;
+	while (true) {
+		k = 0;
+		strtime = to_string(time(NULL));
+		while (k == 224 || k == 0) 
+	    {
+	        k = menu.click();
+	    }
+
+	}
 }
-
-
-class Menu
-{
-public:
-	Menu(string** menuItems, unsigned int menuLength, unsigned int languagesNumber) {
-		this->menuLength = menuLength;
-		this->languagesNumber = languagesNumber;
-		for (unsigned int i = 0; i < menuLength; i++) {
-		}
-		this->menuItems = new string*[languagesNumber];
-		for (unsigned int i = 0; i < languagesNumber; i++) {
-			this->menuItems[i] = new string[menuLength];
-			for (unsigned int j = 0; j < menuLength; j++) {
-				this->menuItems[i][j] = menuItems[i][j];
-			}
-		}
-	}
-	
-	~Menu()
-	{
-		for (unsigned int i = 0; i < menuLength; i++) {
-			delete[] menuItems[i];
-		}
-		delete[] menuItems;
-	}
-	
-	void draw()
-	{
-		system("cls");
-		cout << "Меню\n";
-		for (int i = 0; i < menuLength; i++) {
-			if (i == activeItem) {
-				colorPrint(menuItems[activeLanguage][i]);
-				cout << endl;
-			} else {
-				cout << menuItems[activeLanguage][i] << endl;
-			}
-		}
-		cout << "Выберите номер пункта меню: " << activeItem + 1;
-	}
-	
-	void moveUp()
-	{
-		if (activeItem > 0) {
-			activeItem--;
-		} else {
-			activeItem = menuLength - 1;
-		}
-		draw();
-	}
-	
-	void moveDown()
-	{
-		if (activeItem < menuLength - 1) {
-			activeItem++;
-		} else {
-			activeItem = 0;
-		}
-		draw();
-	}
-	
-	void moveByNumber(unsigned int number)
-	{
-		if (number >= 1 && number <= menuLength && menuLength < 10) {
-			activeItem = number - 1;
-			draw();
-		}
-	}
-
-private:
-	unsigned int menuLength;
-	unsigned int languagesNumber;
-	string** menuItems;
-	
-	unsigned int activeItem = 0;
-	unsigned int activeLanguage = 0;
-	
-	WORD defaultFontAttribute = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-	WORD activeFontAttribute = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
-	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-	
-	void colorPrint(string s)
-	{	
-		SetConsoleTextAttribute(handle, activeFontAttribute);
-		cout << s;
-		SetConsoleTextAttribute(handle, defaultFontAttribute);
-	}
-};
 
 
 int main()
@@ -113,36 +34,44 @@ int main()
 	SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
+	MenuItem* items = new MenuItem[5];
 	
-	string s1[] = {"1. Первый пункт", "2. Второй пункт", "3. Третий (как неожиданно) пункт", "4. Четвёртый пункт", "5. Выход"};
-	string** s = new string*[1];
-	for (unsigned int i = 0; i < 1; i++) {
-		s[i] = new string[5];
-		for (unsigned int j = 0; j < 5; j++) {
-			s[i][j] = s1[j];
+	unsigned int lngs = 1;
+	unsigned int mnlen = 5;
+	unsigned int anmnlen = 3;
+	string s[lngs][mnlen] = {{"1. Первый пункт", "2. Второй пункт", "3. Третий (как неожиданно) пункт", "4. Четвёртый пункт", "5. Выход"}};
+	string s1[lngs][anmnlen] = {{"Меню", "Выберите пункт меню: ", "Для продолжения нажмите любую клавишу..."}};
+	
+	function<void()> fs[5] = { f1, function<void()>(f2), function<void()>(f3), function<void()>(f4), function<void()>(f5) };
+	
+	for (unsigned int i = 0; i < mnlen; i++) {
+		string t[lngs];
+		for (unsigned int j = 0; j < lngs; j++) {
+			t[j] = s[j][i];
 		}
+		items[i] = MenuItem(t, lngs, fs[i]);
 	}
 	
-	Menu menu(s, 5, 1);
+	string t[lngs];
+	t[0] = s[0][0];
+	items[0] = MenuItem(t, 1, fs[0], strtime);
+	
+	BaseMenuItem anItems[3];
+	
+	for (unsigned int i = 0; i < anmnlen; i++) {
+		string t[lngs];
+		for (unsigned int j = 0; j < lngs; j++) {
+			t[j] = s1[j][i];
+		}
+		anItems[i] = BaseMenuItem(t, lngs);
+	}
+	
+	Menu::AnotherMenuItems anItemsStruct = {anItems[0], anItems[1], anItems[2]};
+	
+	Menu menu(items, anItemsStruct, mnlen, lngs);
 	menu.draw();
+	cycle(menu);
 	
-	int n = 0;
-	while (true) {
-		n = 0;
-		
-		while (n == 224 || n == 0) 
-	    {
-	        n = _getch();
-	    }
-	    
-	    if (n == 80) {
-	    	menu.moveDown();
-		} else if (n == 72) {
-			menu.moveUp();
-		} else if (n >= 48 && n <= 57) {
-			menu.moveByNumber(n - 48);
-		}
-	}
 	
 	return 0;
 }

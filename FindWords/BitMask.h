@@ -2,6 +2,7 @@
 #define BITMASK_H
 
 
+
 class BitMask
 {
 public:
