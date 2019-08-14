@@ -9,6 +9,10 @@
 #include <conio.h>
 
 
+const WORD defaultFontAttribute = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+const WORD activeFontAttribute = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+
+
 class Menu
 {
 public:
@@ -172,8 +176,6 @@ private:
 	unsigned int activeLanguage = 0;
 	bool pause = false;
 	
-	WORD defaultFontAttribute = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-	WORD activeFontAttribute = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	
 	void colorPrint(string s)

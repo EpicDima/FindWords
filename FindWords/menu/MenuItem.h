@@ -17,10 +17,10 @@ public:
 		this->func = func;
 	}
 	
-	MenuItem(string* item, unsigned int languagesNumber, function<void()> func, string& value) 
+	MenuItem(string* item, unsigned int languagesNumber, function<void()> func, function<string()> valueFunc) 
 		: MenuItem(item, languagesNumber, func)
 	{
-		this->value = &value;
+		this->valueFunc = valueFunc;
 		this->realTimeValue = true;
 	}
 	
@@ -28,7 +28,7 @@ public:
 		: MenuItem(b.item, b.languagesNumber, b.func)
 	{
 		if (b.realTimeValue) {
-			this->value = b.value;
+			this->valueFunc = b.valueFunc;
 			this->realTimeValue = true;
 		}
 	}
@@ -38,8 +38,8 @@ public:
 		assert(languageIndex >= 0 && languageIndex < languagesNumber);
 		string leftPart = item[languageIndex];
 		if (realTimeValue) {
-			string middlePart = string(maxLength + 5 - leftPart.size(), ' ');
-			return leftPart + middlePart + '(' + *value + ')';
+			string middlePart = string(maxLength - leftPart.size() + offset, ' ');
+			return leftPart + middlePart + '(' + valueFunc() + ')';
 		} else {
 			return leftPart;
 		}
@@ -47,7 +47,8 @@ public:
 	
 	function<void()> func;
 	bool realTimeValue = false;
-	string* value;
+	function<string()> valueFunc;
+	unsigned int offset = 10;
 };
 
 #endif

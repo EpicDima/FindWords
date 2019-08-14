@@ -1,40 +1,46 @@
 #include "Trie.h"
 #include "Timer.h"
 #include "BitMask.h"
-#include "Bitset.h"
+#include "BitSet.h"
+#include "menu/Menu.h"
 #include "FindWordsConstants.h"
-#include "Menu.h"
 
-#include <fstream>
 #include <vector>
 #include <algorithm>
 #include <iomanip>
-#include <windows.h>
+#include <fstream>
 
 
 
+void createMenu();
 vector<pair<string, BitMask>> findAllPossibleWords();
 vector<pair<string, BitMask>> f(string word, int x, int y, BitMask mask);
-void openDictionary(string filename);
+void openDictionary(string filename = "dictionary.txt");
 void changeDictionary();
 void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string, BitMask>> possibleWords);
-void colorPrint(string s, WORD attribute);
-void outputMatrix(vector<pair<string, BitMask>> matchedWords);
+void printColorChar(char ch, WORD attribute);
+pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeResults(vector<pair<string, BitMask>> matchedWords);
+void outputMatchedWords(vector<pair<string, BitMask>> matchedWords);
+WORD* createAttributesArray(unsigned int max);
+void outputTables(vector<pair<string, BitMask>> matchedWords, vector<vector<unsigned int>> decodedResults, WORD* attrs);
+void outputCombinationResults(vector<pair<string, BitMask>> matchedWords);
 bool comparator(const string &a, const string &b);
-template<typename T1>
-void f2(Bitset<T1> &mask, Bitset<T1> indexes, unsigned int start);
+void f2(BitSet &mask, BitSet indexes, unsigned int start);
 void ffff(vector<pair<string, BitMask>> matchedWords);
 void calculate();
+unsigned int inputPositiveNumber();
 void inputTable();
+string getStateOfNeedFindCombination();
+string getMinMaxLengthsStr();
+string getVocabularySizeStr();
 void changeMinAndMaxWordLength();
-void printMenu();
-void menu();
 
 
-WORD attributes[] = {FOREGROUND_RED, FOREGROUND_GREEN, FOREGROUND_BLUE, FOREGROUND_INTENSITY, BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE,  BACKGROUND_INTENSITY};	
+const unsigned int attributesLength = 8;
+const WORD attributes[attributesLength] = {FOREGROUND_RED, FOREGROUND_GREEN, FOREGROUND_BLUE, FOREGROUND_INTENSITY, BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE,  BACKGROUND_INTENSITY};	
 
-const int dx[] = { 1, -1, 0, 0 };
-const int dy[] = { 0, 0, 1, -1 };
+const int dx[4] = { 1, -1, 0, 0 };
+const int dy[4] = { 0, 0, 1, -1 };
 
 unsigned int n;
 unsigned int m;
@@ -46,51 +52,60 @@ unsigned int maxLength = 10;
 Trie* vocabularyWords;
 unsigned int vocabularyWordsSize;
 
-bool russianLanguage = true;
-const string defaultFilename = "dictionary.txt";
-
 unsigned long long calculationTimeInNanoseconds;
 
-vector<Bitset<unsigned long long>> bitsetMasks;
-vector<Bitset<unsigned long long>> results;
+bool needFindCombination = false;
+
+vector<BitSet> bitsetMasks;
+vector<BitSet> results;
 unsigned int matchedWordsSize = 0;
 
-
-Menu* createMenu()
-{
-	function<void()> funcs[CONSTANTS::MenuItemsNumber] = {[]() { inputTable(); calculate(); }, 
-		changeDictionary, changeMinAndMaxWordLength,      []() { exit(0); } };
-		
-	MenuItem* items = new MenuItem[CONSTANTS::MenuItemsNumber];
-	for (unsigned int i = 0; i < CONSTANTS::MenuItemsNumber; i++) {
-		items[i] = MenuItem(CONSTANTS::MenuItemsStrings[i], CONSTANTS::LanguagesNumber, funcs[i]);
-	}
-	
-	BaseMenuItem auxItems[3];
-	for (unsigned int i = 0; i < CONSTANTS::AuxiliaryMenuItemsNumber; i++) {
-		auxItems[i] = BaseMenuItem(CONSTANTS::AuxiliaryMenuItemsStrings[i], CONSTANTS::LanguagesNumber);
-	}
-	Menu::AnotherMenuItems auxItemsStruct = { auxItems[0], auxItems[1], auxItems[2] };
-	
-	return new Menu(items, auxItemsStruct, CONSTANTS::MenuItemsNumber, CONSTANTS::LanguagesNumber);
-}
+Menu *mainmenu;
 
 
 int main()
 {
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
-
-	openDictionary(defaultFilename);
-	Menu mainmenu = *createMenu();
-	mainmenu.draw();
-	while (true) {
-		mainmenu.click();
-	}
 	
-	//menu();
+	openDictionary();
+	createMenu();
+	
+	while (true) {
+		mainmenu->click();
+	}
 
 	return 0;
+}
+
+
+void createMenu()
+{
+	function<void()> funcs[fw::MenuItemsNumber] = { []() { inputTable(); calculate(); }, 
+		[]() { needFindCombination = !needFindCombination; }, 
+		changeMinAndMaxWordLength, changeDictionary, []() { exit(0); } };
+		
+	MenuItem* items = new MenuItem[fw::MenuItemsNumber];
+	for (unsigned int i = 0; i < fw::MenuItemsNumber; i++) {
+		if (i + 1 == 2) {
+			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i], getStateOfNeedFindCombination);
+		} else if (i + 1 == 3) {
+			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i], getMinMaxLengthsStr);
+		} else if (i + 1 == 4) {
+			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i], getVocabularySizeStr);
+		} else {
+			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i]);
+		}
+	}
+	
+	BaseMenuItem auxItems[fw::AuxiliaryMenuItemsNumber];
+	for (unsigned int i = 0; i < fw::AuxiliaryMenuItemsNumber; i++) {
+		auxItems[i] = BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[i], fw::LanguagesNumber);
+	}
+	Menu::AnotherMenuItems auxItemsStruct = { auxItems[0], auxItems[1], auxItems[2] };
+	
+	mainmenu = new Menu(items, auxItemsStruct, fw::MenuItemsNumber, fw::LanguagesNumber);
+	mainmenu->draw();
 }
 
 
@@ -181,101 +196,168 @@ void openDictionary(string filename)
 void changeDictionary()
 {
 	string filename;
-	cout << endl << (russianLanguage ? "Введите путь к файлу-словарю: " 
-                                     : "Enter the path to the dictionary file: ");
+	cout << endl << mainmenu->chooseElementFromArrayByActiveLanguage(fw::PathToTheDictionaryString);
 	cin >> filename;
 	openDictionary(filename);
 }
 
 
+pair<unsigned long long, string> getCalculationTime()
+{
+	unsigned long long calculationTime;
+	string strCalculationTime;
+	if (calculationTimeInNanoseconds > 100000000000) {
+		calculationTime = calculationTimeInNanoseconds / 1000000000;
+		strCalculationTime = mainmenu->chooseElementFromArrayByActiveLanguage(fw::CalculationTimeSecondsString);
+	} else if (calculationTimeInNanoseconds > 100000000) {
+		calculationTime = calculationTimeInNanoseconds / 1000000;
+		strCalculationTime = mainmenu->chooseElementFromArrayByActiveLanguage(fw::CalculationTimeMillisecondsString);
+	} else {
+		calculationTime = calculationTimeInNanoseconds / 1000;
+		strCalculationTime = mainmenu->chooseElementFromArrayByActiveLanguage(fw::CalculationTimeMicrosecondsString);
+	}
+	return make_pair(calculationTime, strCalculationTime);
+}
+
 
 void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string, BitMask>> possibleWords)
 {
-	cout << (russianLanguage ? "Время расчёта (миллисекунды):                                         "
-	                         : "Calculation time (milliseconds):                                      " )
-	                         << setw(14) << static_cast<double>(calculationTimeInNanoseconds / 1000000.0) << endl << endl;
-	cout << (russianLanguage ? "Количество словарных слов, подходящих под условия длины:              "
-		                     : "The number of vocabulary words that fit the conditions of the length: ") 
-							 << setw(14) << vocabularyWordsSize << endl;
-	cout << (russianLanguage ? "Количество возможных слов в таблице:                                  " 
-							 : "Number of possible words in the table:                                ") 
-							 << setw(14) << possibleWords.size() << endl;
-	cout << (russianLanguage ? "Количество совпавших словарных и возможных слов:                      " 
-	                         : "Number of matched dictionary and possible words:                      ") 
-							 << setw(14) << matchedWords.size() << endl;
-	outputMatrix(matchedWords);
+	pair<unsigned long long, string> calculationTimePair = getCalculationTime();
+	cout << endl << calculationTimePair.second
+	     << setw(14) << calculationTimePair.first << endl << endl;
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::VocabularyWordsSizeString)
+		 << setw(14) << vocabularyWordsSize << endl;
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::PossibleWordsSizeString)
+		 << setw(14) << possibleWords.size() << endl;
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::MatchedWordsSizeString)
+		 << setw(14) << matchedWords.size() << endl;
+		 
+	if (needFindCombination) {
+		outputCombinationResults(matchedWords);
+	} else {
+		outputMatchedWords(matchedWords);
+	}
 }
 
 
-void colorPrint(string s, WORD attribute)
+void printColorChar(char ch, WORD attribute)
 {
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	SetConsoleTextAttribute(handle, attribute);
-	cout << s;
+	cout << ch;
 }
 
 
-void outputMatrix(vector<pair<string, BitMask>> matchedWords)
+void outputMatchedWords(vector<pair<string, BitMask>> matchedWords)
+{
+	vector<string> tempwords;
+	for (unsigned int i = 0; i < matchedWords.size(); i++) {
+		tempwords.push_back(matchedWords[i].first);
+	}
+	sort(tempwords.begin(), tempwords.end(), comparator);
+	tempwords.resize(unique(tempwords.begin(), tempwords.end()) - tempwords.begin());
+	
+	if (tempwords.size() > 0) {
+		cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::MatchedWordsString) << endl;
+		for (unsigned int i = 0; i < tempwords.size(); i++) {
+			cout << tempwords[i] << endl;
+		}
+	}
+}
+
+
+pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeResults(vector<pair<string, BitMask>> matchedWords)
 {
 	vector<string> words;
-	vector<vector<unsigned int>> v;
+	vector<vector<unsigned int>> decodedResults;
 	unsigned int max = 0;
 	for (unsigned int i = 0; i < results.size(); i++) {
 		unsigned int k = 0;
 		vector<unsigned int> temp;
-		for (unsigned int j = 0; j < n * m; j++) {
+		for (unsigned int j = 0; j < matchedWords.size(); j++) {
 			if (results[i][j]) {
 				temp.push_back(j);
 				words.push_back(matchedWords[j].first);
 				k++;
 			}
 		}
-		v.push_back(temp);
-		if (k > max) {
-			max = k;
-		}
+		decodedResults.push_back(temp);
+		max = k > max ? k : max;
 	}
-	
 	sort(words.begin(), words.end(), comparator);
 	words.resize(unique(words.begin(), words.end()) - words.begin());
-	
-	cout << (russianLanguage ? "Количество совпавших слов, которые можно скомбинировать:              " 
-	                         : "Number of matched words that can be combined:                         ") 
-							 << setw(14) << words.size() << endl << endl;
-	
-	cout << "\n\n";
-	for (unsigned int i = 0; i < words.size(); i++) {
-		cout << words[i] << endl;
-	}
-	cout << "\n\n";
-	
+	return make_pair(make_pair(words, decodedResults), max);
+}
+
+
+WORD* createAttributesArray(unsigned int max)
+{
 	WORD* attrs = new WORD[max];
 	unsigned int counter = 0;
-	for (unsigned int i = 0; i < 8; i++) {
-		for (unsigned int j = 0; j < 8; j++) {
-			for (unsigned int k = 0; k < 8; k++) {
+	for (unsigned int i = 0; i < attributesLength; i++) {
+		for (unsigned int j = 0; j < attributesLength; j++) {
+			for (unsigned int k = 0; k < attributesLength; k++) {
 				if (counter >= max) {
 					break;
 				}
-				if (!(i % 4 == j % 4 || i % 4 == k % 4 || j % 4 == k % 4)) {
+				if (!(i % (attributesLength / 2) == j % (attributesLength / 2) 
+				      || i % (attributesLength / 2) == k % (attributesLength / 2) 
+				      || j % (attributesLength / 2) == k % (attributesLength / 2))) {
 					attrs[counter] = attributes[i] | attributes[j] | attributes[k];
 					counter++;
 				}
 			}
 		}
 	}
-	for (unsigned int h = 0; h < v.size(); h++) {
+	return attrs;
+}
+
+
+void outputTables(vector<pair<string, BitMask>> matchedWords, vector<vector<unsigned int>> decodedResults, WORD* attrs)
+{
+	cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::ColoredTablesString) << "\n";
+	for (unsigned int h = 0; h < decodedResults.size(); h++) {
+		cout << "\n" << h + 1 << ")\n"; 
 		for (unsigned int i = 0; i < n; i++) {
 			for (unsigned int j = 0; j < m; j++) {
-				for (unsigned int k = 0; k < v[0].size(); k++) {
-					if (matchedWords[v[0][k]].second[i][j]) {
-						colorPrint(string(1, matrix[i][j]), attrs[k]);
+				if (matrix[i][j] != ' ') {
+					for (unsigned int k = 0; k < decodedResults[h].size(); k++) {
+						if (matchedWords[decodedResults[h][k]].second[i][j]) {
+							printColorChar(matrix[i][j], attrs[k]);
+							break;
+						}
 					}
+				} else {
+					cout << " ";
 				}
 			}
 			cout << endl;
 		}
-		colorPrint("\n\n", FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+		printColorChar('\n', FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+	}
+}
+
+
+void outputCombinationResults(vector<pair<string, BitMask>> matchedWords)
+{
+	pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> p = decodeResults(matchedWords);
+	vector<string> words = p.first.first;
+	vector<vector<unsigned int>> decodedResults = p.first.second;
+	unsigned int max = p.second;
+	
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::CombinedWordsSizeString)
+		 << setw(14) << words.size();
+	
+	if (words.size() > 0) {
+		cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::CombinedWordsString) << endl;
+		for (unsigned int i = 0; i < words.size(); i++) {
+			cout << words[i] << endl;
+		}
+		
+		WORD* attrs = createAttributesArray(max);
+		outputTables(matchedWords, decodedResults, attrs);
+	} else {
+		outputMatchedWords(matchedWords);
 	}
 }
 
@@ -292,21 +374,18 @@ bool comparator(const string &a, const string &b)
 }
 
 
-template<typename T1>
-void f2(Bitset<T1> &mask, Bitset<T1> indexes, unsigned int start)
+void f2(BitSet &mask, BitSet indexes, unsigned int start)
 {
 	for (unsigned int i = start; i < matchedWordsSize; i++) {
 		if ((mask & bitsetMasks[i]).isAllFalse()) {
-			Bitset<T1> temp(mask);
+			BitSet temp(mask);
 			temp |= bitsetMasks[i];
-			
 			if (temp.isAllTrue()) {
 				indexes.set(i, true);
 				results.push_back(indexes);
 				return;
 			}
-			
-			Bitset<T1> tempIndexes(indexes);
+			BitSet tempIndexes(indexes);
 			tempIndexes.set(i, true);
 			f2(temp, tempIndexes, i);
 		}
@@ -314,14 +393,19 @@ void f2(Bitset<T1> &mask, Bitset<T1> indexes, unsigned int start)
 }
 
 
-
 void ffff(vector<pair<string, BitMask>> matchedWords)
 {
-	matchedWordsSize = matchedWords.size();	
-	for (unsigned int i = 0; i < matchedWordsSize; i++) {
-		bitsetMasks.push_back(Bitset<unsigned long long>(n * m, matchedWords[i].second.getRawMask(), n, m));
+	BitSet originalMask(n * m);
+	for (unsigned int i = 0; i < n; i++) {
+		for (unsigned int j = 0; j < m; j++) {
+			originalMask.set(i * m + j, (matrix[i][j] == ' '));
+		}
 	}
 	
+	matchedWordsSize = matchedWords.size();
+	for (unsigned int i = 0; i < matchedWordsSize; i++) {
+		bitsetMasks.push_back(BitSet(n * m, matchedWords[i].second.getRawMask(), n, m) & ~originalMask);
+	}
 	
 	unsigned int min = 0, x0 = 0, y0 = 0;
 	min = ~min;
@@ -331,7 +415,7 @@ void ffff(vector<pair<string, BitMask>> matchedWords)
 			for (unsigned int k = 0; k < matchedWordsSize; k++) {
 				s += matchedWords[k].second[i][j];
 			}
-			if (s < min) {
+			if (s < min && s != 0) {
 				min = s;
 				x0 = i;
 				y0 = j;
@@ -341,9 +425,14 @@ void ffff(vector<pair<string, BitMask>> matchedWords)
 	
 	for (unsigned int i = 0; i < matchedWordsSize; i++) {
 		if (matchedWords[i].second[x0][y0]) {
-			Bitset<unsigned long long> indexes(matchedWordsSize);
+			BitSet indexes(matchedWordsSize);
 			indexes.set(i, true);
-			f2(bitsetMasks[i], indexes, 0);
+			BitSet tempMask(bitsetMasks[i] | originalMask);
+			if (!(tempMask).isAllTrue()) {
+				f2(tempMask, indexes, 0);
+			} else {
+				results.push_back(indexes);
+			}
 		}
 	}
 	matchedWordsSize = 0;
@@ -361,31 +450,47 @@ void calculate()
 		}
 	}
 
-	ffff(matchedWords);
+	if (needFindCombination) {
+		ffff(matchedWords);
+	}
 
 	calculationTimeInNanoseconds = timer.elapsedNanoseconds();
 	outputResult(matchedWords, possibleWords);
 	
+	bitsetMasks.clear();
 	results.clear();
+}
+
+
+unsigned int inputPositiveNumber()
+{
+	long long k = -1;
+	while (k <= 0) {
+		while (!(cin >> k)) {
+			cin.clear();
+	        cin.sync();
+		}
+	}
+	return static_cast<unsigned int>(k);
 }
 
 
 void inputTable()
 {
-	cout << endl << (russianLanguage ? "Введите количество строк: " 
-	                                 : "Enter the number of lines: ");
-	cin >> n;
-	cout << (russianLanguage ? "Введите количество столбцов: " 
-	                         : "Enter the number of columns: ");
-	cin >> m;
+	cout << endl << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterLinesString);
+	n = inputPositiveNumber();
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterColumnsString);
+	m = inputPositiveNumber();
 
 	matrix = new char*[n];
 	for (unsigned int i = 0; i < n; i++) {
 		matrix[i] = new char[m];
+		for (unsigned int j = 0; j < m; j++) {
+			matrix[i][j] = ' ';
+		}
 	}
 
-	cout << (russianLanguage ? "Вводите буквы (строка пишется без пробелов)" 
-	                         : "Enter letters (the string is written without spaces)") << endl << endl;
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterLettersString) << endl << endl;
 	
 	cin.ignore();
 	for (unsigned int i = 0; i < n; i++) {
@@ -395,80 +500,33 @@ void inputTable()
 }
 
 
+string getStateOfNeedFindCombination()
+{
+	if (needFindCombination) {
+		return mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnabledStateString);
+	} else {
+		return mainmenu->chooseElementFromArrayByActiveLanguage(fw::DisabledStateString);
+	}
+}
+
+
+string getMinMaxLengthsStr()
+{
+	return mainmenu->chooseElementFromArrayByActiveLanguage(fw::MinimumString) + to_string(minLength)
+		+ mainmenu->chooseElementFromArrayByActiveLanguage(fw::MaximumString) + to_string(maxLength);
+}
+
+
+string getVocabularySizeStr()
+{
+	return mainmenu->chooseElementFromArrayByActiveLanguage(fw::VocabularySizeString) + to_string(vocabularyWordsSize);
+}
+
+
 void changeMinAndMaxWordLength()
 {
-	unsigned int t;
-	cout << (russianLanguage ? "Введите минимальную длину слова: " 
-                             : "Enter the minimum word length: ");
-	if (!(cin >> t)) {
-        cin.clear();
-        cin.sync();
-        t = minLength;
-    } else {
-    	minLength = t;
-	}
-	cout << (russianLanguage ? "Введите максимальную длину слова: " 
-                             : "Enter the maximum word length: ");
-	if (!(cin >> t)) {
-        cin.clear();
-        cin.sync();
-        t = maxLength;
-    } else {
-    	maxLength = t;
-	}
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterMinLengthString);
+	minLength = inputPositiveNumber();
+	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterMaxLengthString);
+	maxLength = inputPositiveNumber();
 }
-
-
-void printMenu()
-{
-	system("cls");
-	cout << (russianLanguage ? "Меню" 
-	                         : "Menu") << endl;
-	cout << (russianLanguage ? "1. Ввод таблицы букв" 
-	                         : "1. Entering a table of letters") << endl;
-	cout << (russianLanguage ? "2. Выбор другого файла-словаря" 
-	                         : "2. Selecting another dictionary file") << endl;
-	cout << (russianLanguage ? "3. Смена языка" 
-	                         : "3. Language change") << endl;
-	cout << (russianLanguage ? "4. Изменить диапазон длин слов"
-	                         : "4. Change default length range of words") << endl;
-	cout << (russianLanguage ? "5. Выход" 
-	                         : "5. Exit") << endl;
-	cout << (russianLanguage ? "Выберите пункт меню: " 
-	                         : "Select menu item: ");
-}
-
-
-void menu()
-{
-	unsigned int k = 0;
-	bool flag = false;
-	while (!flag) {
-		printMenu();
-		if (!(cin >> k)) {
-	        cin.clear();
-	        cin.sync();
-	        k = 0;
-	    }
-	    switch (k) {
-	    	case 1:
-	    		inputTable();
-	    		calculate();
-	    		system("pause");
-	    		break;
-	    	case 2: 
-	    		changeDictionary();
-	    		break;
-	    	case 3:
-	    		russianLanguage = !russianLanguage;
-	    		break;
-	    	case 4:	
-	    		changeMinAndMaxWordLength();
-	    		break;
-	    	case 5:
-	    		flag = true;
-				break;	
-		}
-	}
-}
-
