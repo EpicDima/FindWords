@@ -8,7 +8,7 @@ typedef unsigned long long ull_t;
 
 
 const ull_t TYPESIZE_IN_BITS = 64;
-const ull_t n = 1000000000;
+const ull_t n = 10000000;
 const ull_t length = n / TYPESIZE_IN_BITS + 1;
 
 ull_t data[length];
@@ -146,6 +146,35 @@ void f555(ull_t index, bool value)
 }
 
 
+ull_t& f6(ull_t index, ull_t& mask) 
+{
+	mask = 1ULL << (index % TYPESIZE_IN_BITS);
+	return data[index / TYPESIZE_IN_BITS];
+}
+
+
+bool f66(ull_t index)
+{
+	ull_t v2;
+	return (f6(index, v2) & v2) != 0;
+}
+
+
+void f666(ull_t index, bool value) 
+{
+	ull_t v2;
+	ull_t& v1 = f6(index, v2);
+	v1 = value ? (v1 | v2) : (v1 & ~v2);
+}
+
+
+ull_t& test()
+{
+	data[4] = true;
+	return data[4];
+}
+
+
 void ft1()
 {
 	bool cond;
@@ -168,36 +197,15 @@ void ft2()
 		ull_t t2 = data[i] & ~data[i - 1];
 		data[i] = cond ? t1 : t2;
 	}
-	
-		// 1)
-		// 0 0   0
-		// 0 1   1
-		// 1 0   1
-		// 1 1   1
-	
-		// 2)
-		// 0 0    0 1   0
-		// 0 1    0 0   0
-		// 1 0    1 1   1
-		// 1 1    1 0   0
-		
-		// result)
-		//      |    & 
-		// 0 0     0  1   0
-		// 0 1     1  0   0
-		// 1 0     1  1   1
-		// 1 1     1  0   0
 }
 
 void ft3()
 {
-	bool cond;
 	for (unsigned int i = 1; i < length; i++) {
 		bool cond = i % 2 == 0;
-		data[i] &= ~data[i - 1];
-		if (cond) {
-			data[i] |= data[i - 1];
-		}
+		ull_t cond2 = static_cast<ull_t>(cond);
+		cond2++;
+		data[i] = (~cond2 & (data[i] | data[i - 1])) | (cond2 & (data[i] & ~data[i - 1]));
 	}
 }
 
@@ -213,7 +221,7 @@ int main()
 {
 	Timer timer;
 	bool bl;
-	/*
+	
 //	timer.reset();
 //	for (unsigned int i = 0; i < n; i++)
 //	{
@@ -260,16 +268,30 @@ int main()
 		f555(i, bl);
 	}
 	cout << timer.elapsedNanoseconds() << endl;
+	
+	timer.reset();
+	for (unsigned int i = 0; i < n; i++)
+	{
+		bl = f66(i);
+		f666(i, bl);
+	}
+	cout << timer.elapsedNanoseconds() << endl;
+	
 	unsigned long long cycles1 = rdtsc();
 	unsigned long long cycles2 = rdtsc();
 	cout << "cycles: " << cycles2 - cycles1 << endl;
-	*/
+	
+	/*
 	timer.reset();
 	ft1();
 	cout << timer.elapsedNanoseconds() << endl;
 	timer.reset();
 	ft2();
 	cout << timer.elapsedNanoseconds() << endl;
-	
+	timer.reset();
+	ft3();
+	cout << timer.elapsedNanoseconds() << endl;
+	*/
+
 	return 0;
 }

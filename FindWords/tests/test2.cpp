@@ -5,14 +5,15 @@
 #include "BitSetD2.h"
 #include "BitSetD.h"
 #include "../BitSet.h"
+#include "BoolSet.h"
 #include "../Timer.h"
 
 using namespace std;
 
 
-const unsigned int n = 50000;
-const unsigned int size1 = 31;
-const unsigned int size2 = 31;
+const unsigned int n = 1000;
+const unsigned int size1 = 201;
+const unsigned int size2 = 201;
 const unsigned int size = size1 * size2;
 
 bool t;
@@ -97,7 +98,8 @@ void f9(T* a)
 BitSetD2* bitsetD2 = new BitSetD2[n];
 BitSetD* bitsetD = new BitSetD[n];
 BitSet* bitset = new BitSet[n];
-const unsigned int cycles = 30;
+BoolSet* boolset = new BoolSet[n];
+const unsigned int cycles = 10;
 
 int main()
 {
@@ -111,15 +113,17 @@ int main()
 
 	Timer timer;
 
-	vector<function<void()>> fs = {[]() {f1(bitsetD2);}, []() {f1(bitsetD);}, []() {f1(bitset);},
-		                           []() {f2(bitsetD2);}, []() {f2(bitsetD);}, []() {f2(bitset);},
-								   []() {f3(bitsetD2);}, []() {f3(bitsetD);}, []() {f3(bitset);},
-							       []() {f4(bitsetD2);}, []() {f4(bitsetD);}, []() {f4(bitset);},
-								   []() {f5(bitsetD2);}, []() {f5(bitsetD);}, []() {f5(bitset);},
-								   []() {f6(bitsetD2);}, []() {f6(bitsetD);}, []() {f6(bitset);},
-								   []() {f7(bitsetD2);}, []() {f7(bitsetD);}, []() {f7(bitset);},
-								   []() {f8(bitsetD2);}, []() {f8(bitsetD);}, []() {f8(bitset);},
-								   []() {f9(bitsetD2);}, []() {f9(bitsetD);}, []() {f9(bitset);}};
+	vector<function<void()>> fs = {
+//	[]() {f1(bitsetD2);}, []() {f1(bitsetD);}, []() {f1(bitset);}, []() {f1(boolset);},
+//		                           []() {f2(bitsetD2);}, []() {f2(bitsetD);}, []() {f2(bitset);}, []() {f2(boolset);},
+//								   []() {f3(bitsetD2);}, []() {f3(bitsetD);}, []() {f3(bitset);}, []() {f3(boolset);},
+//							       []() {f4(bitsetD2);}, []() {f4(bitsetD);}, []() {f4(bitset);}, []() {f4(boolset);},
+//								   []() {f5(bitsetD2);}, []() {f5(bitsetD);}, []() {f5(bitset);}, []() {f5(boolset);},
+//								   []() {f6(bitsetD2);}, []() {f6(bitsetD);}, []() {f6(bitset);}, []() {f6(boolset);},
+//								   []() {f7(bitsetD2);}, []() {f7(bitsetD);}, []() {f7(bitset);}, []() {f7(boolset);},
+								   []() {f8(bitsetD2);}, []() {f8(bitsetD);}, []() {f8(bitset);}, []() {f8(boolset);},
+//								   []() {f9(bitsetD2);}, []() {f9(bitsetD);}, []() {f9(bitset);}, []() {f9(boolset);}
+};
 	
 	float *fsResults = new float[fs.size()];
 	for (unsigned int i = 0; i < fs.size(); i++) {
@@ -129,6 +133,7 @@ int main()
 	float bitsetD2Sum = 0;
 	float bitsetDSum = 0;
 	float bitsetSum = 0;
+	float boolsetSum = 0;
 	
 	for (unsigned int k = 0; k < cycles; k++) {
 		for (unsigned int i = 0; i < fs.size(); i++) {
@@ -140,17 +145,20 @@ int main()
 	
 	unsigned int k = 1;
 	for (unsigned int i = 0; i < fs.size(); i++) {
-		if (i % 3 == 0) {
+		if (i % 4 == 0) {
 			bitsetD2Sum += fsResults[i] / cycles;
 			cout << k << " BitSetD2: " << fsResults[i] / cycles << endl;
-		} else if (i % 3 == 1){
+		} else if (i % 4 == 1){
 			bitsetDSum += fsResults[i] / cycles;
 			cout << k << " BitSetD:  " << fsResults[i] / cycles << endl;
-		} else {
+		} else if (i % 4 == 2){
 			bitsetSum += fsResults[i] / cycles;
-			cout << k << " BitSet:   " << fsResults[i] / cycles << endl << endl;
+			cout << k << " BitSet:   " << fsResults[i] / cycles << endl;
+		} else {
+			boolsetSum += fsResults[i] / cycles;
+			cout << k << " BoolSet:  " << fsResults[i] / cycles << endl << endl;
 		}
-		if ((i + 1) % 3 == 0) {
+		if ((i + 1) % 4 == 0) {
 			k++;
 		}
 	}
@@ -159,5 +167,6 @@ int main()
 	cout << "BitSetD2Sum: " << bitsetD2Sum << endl;
 	cout << "BitSetDSum:  " << bitsetDSum << endl;
 	cout << "BitSetSum:   " << bitsetSum << endl;
+	cout << "BoolSetSum:  " << boolsetSum << endl;
     return 0;
 }
