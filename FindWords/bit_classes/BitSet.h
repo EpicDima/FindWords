@@ -1,5 +1,5 @@
-#ifndef BITSETD2_H
-#define BITSETD2_H
+#ifndef BITSET_H
+#define BITSET_H
 
 
 #include <iostream>
@@ -17,13 +17,13 @@ const ull_t TYPESIZE_IN_BITS = TYPESIZE_IN_BYTES * 8;
 const ull_t ULL_MAX_VALUE = ~0ULL;
 
 
-class BitSetD2
+class BitSet
 {
 public:
-	BitSetD2() {}
+	BitSet() {}
 	
 	
-	BitSetD2(ull_t nBits) : nBits(nBits)
+	BitSet(ull_t nBits) : nBits(nBits)
 	{
 		count = nBits / TYPESIZE_IN_BITS;
 		ull_t difference = nBits % TYPESIZE_IN_BITS;
@@ -35,7 +35,7 @@ public:
 	}
 	
 	
-	BitSetD2(ull_t nBits, bool** a, ull_t n, ull_t m) : BitSetD2(nBits)
+	BitSet(ull_t nBits, bool** a, ull_t n, ull_t m) : BitSet(nBits)
 	{
 		ull_t mask = 1;
 		ull_t k = 0;
@@ -56,11 +56,11 @@ public:
 	}
 	
 
-	BitSetD2(const BitSetD2& b) : nBits(b.nBits), count(b.count), lastmask(b.lastmask)
+	BitSet(const BitSet& b) : nBits(b.nBits), count(b.count), lastmask(b.lastmask)
 	{
 		this->data = new ull_t[this->count];
 		
-		// оптимизация под небольшие массивы, такие как обычно в FindWords
+		// оптимизация под небольшие массивы, такие как обычно в FindWords (примерно nBits < 500)
 		for (ull_t i = 0; i < this->count; i++) {
 			this->data[i] = b.data[i];
 		}
@@ -70,13 +70,13 @@ public:
 	}
 	
 	
-	~BitSetD2()
+	~BitSet()
 	{
 		delete [] data;
 	}
 	
 	
-	BitSetD2& operator&= (const BitSetD2& b)
+	BitSet& operator&= (const BitSet& b)
 	{
 		assert(this->nBits == b.nBits);
 		for (ull_t i = 0; i < this->count; i++) {
@@ -86,7 +86,7 @@ public:
 	}
 	
 	
-	BitSetD2& operator|= (const BitSetD2& b)
+	BitSet& operator|= (const BitSet& b)
 	{
 		assert(this->nBits == b.nBits);
 		for (ull_t i = 0; i < this->count; i++) {
@@ -96,25 +96,25 @@ public:
 	}
 	
 	
-	BitSetD2 operator& (const BitSetD2& b)
+	BitSet operator& (const BitSet& b)
 	{
-		BitSetD2 temp(*this);
+		BitSet temp(*this);
 		temp &= b;
 		return temp;
 	}
 	
 	
-	BitSetD2 operator| (const BitSetD2& b)
+	BitSet operator| (const BitSet& b)
 	{
-		BitSetD2 temp(*this);
+		BitSet temp(*this);
 		temp |= b;
 		return temp;
 	}
 	
 	
-	BitSetD2 operator~ ()
+	BitSet operator~ ()
 	{
-		BitSetD2 temp(*this);
+		BitSet temp(*this);
 		for (ull_t i = 0; i < temp.count; i++) {
 			temp.data[i] = ~temp.data[i];
 		}
