@@ -17,18 +17,18 @@ public:
 	
 	void reset()
 	{
-		start = chrono::high_resolution_clock::now();
+		start = std::chrono::high_resolution_clock::now();
 	}
 	
 	
 	unsigned long long elapsedNanoseconds() const
 	{
-		return chrono::duration_cast<chrono::nanoseconds>(chrono::high_resolution_clock::now() - start).count();
+		return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count();
 	}
 
 
 private:
-	chrono::time_point<chrono::high_resolution_clock> start;
+	std::chrono::time_point<std::chrono::high_resolution_clock> start;
 };
 
 #endif

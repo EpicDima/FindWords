@@ -6,6 +6,8 @@
 class BitMask
 {
 public:
+	BitMask() {}
+	
 	BitMask(unsigned int nRows, unsigned int nCols)
 	{
 		this->nRows = nRows;

@@ -15,6 +15,9 @@ const unsigned int TYPESIZE = 64;
 class BitSet
 {
 public:
+	BitSet() {}
+	
+	
 	BitSet(unsigned int nBits)
 	{
 		this->nBits = nBits; 
@@ -111,7 +114,7 @@ public:
 		for (unsigned int i = 0; i < temp.count; i++) {
 			temp.data[i] = ~temp.data[i];
 		}
-		temp.data[temp.count - 1] = temp.data[temp.count - 1] & ~temp.lastmask;
+		temp.data[temp.count - 1] = ~temp.lastmask & temp.data[temp.count - 1];
 		return temp;
 	}
 	
@@ -166,9 +169,6 @@ private:
 	pair<unsigned int, ull_t> getMaskByIndex(const unsigned int index) const
 	{
 		unsigned int typeindex = index / TYPESIZE;
-		if (typeindex >= count) {
-			cout << "\n--->>> " << index << "\t" << typeindex << "\t" << count << "\t" << nBits << endl;
-		}
 		assert(typeindex < count);
 		ull_t mask = 1;
 		mask <<= (index % TYPESIZE);

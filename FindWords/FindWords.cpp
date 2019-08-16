@@ -1,7 +1,11 @@
 #include "Trie.h"
 #include "Timer.h"
 #include "BitMask.h"
-#include "BitSet.h"
+
+//#include "BitSet.h"
+
+
+
 #include "menu/Menu.h"
 #include "FindWordsConstants.h"
 
@@ -10,6 +14,13 @@
 #include <iomanip>
 #include <fstream>
 
+
+//#include "tests/BitSetD.h"
+//typedef BitSetD BitSet;
+
+
+#include "tests/BitSetD2.h"
+typedef BitSetD2 BitSet;
 
 
 void createMenu();
