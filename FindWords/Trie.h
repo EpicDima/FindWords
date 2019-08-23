@@ -3,7 +3,8 @@
 
 
 #include <string>
-#include <map>
+//#include <map>
+#include <unordered_map>
 
 using namespace std;
 
@@ -73,7 +74,7 @@ private:
 		}
 		
 		
-		bool findSubstr(string substr, unsigned int size, unsigned int index)
+		bool findSubstr(string &substr, unsigned int size, unsigned int index)
 		{
 			if (index == size) {
 				return true;
@@ -85,7 +86,7 @@ private:
 		}
 		
 		
-		bool findWord(string word, unsigned int size, unsigned int index)
+		bool findWord(string &word, unsigned int size, unsigned int index)
 		{
 			if (index == size && this->wholeWord) {
 				return true;
@@ -98,7 +99,7 @@ private:
 		
 		
 	private:
-		map<char, Node*> letters;
+		unordered_map<char, Node*> letters;
 		bool wholeWord;
 	};
 	

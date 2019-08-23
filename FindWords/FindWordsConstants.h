@@ -31,9 +31,9 @@ string MenuConstants::AuxiliaryMenuItemsStrings[AuxiliaryMenuItemsNumber][Langua
 	{"Для продолжения нажмите любую клавишу...", "Press any key now to continue..."}};
 
 extern const string PathToTheDictionaryString[LanguagesNumber] = {"Введите путь к файлу-словарю: ", "Enter the path to the dictionary file: "};
-extern const string CalculationTimeMicrosecondsString[LanguagesNumber] = {"Время расчёта (микросекунды):                            ", "Calculation time (microseconds):                                  "};
-extern const string CalculationTimeMillisecondsString[LanguagesNumber] = {"Время расчёта (миллисекунды):                            ", "Calculation time (milliseconds):                                  "};
-extern const string CalculationTimeSecondsString[LanguagesNumber] = {"Время расчёта (секунды):                                 ", "Calculation time (seconds):                                       "};
+extern const string CalculationTimeMicrosecondsString[LanguagesNumber] = {"Время расчёта (микросекунды):                            ", "Calculation time (microseconds):                 "};
+extern const string CalculationTimeMillisecondsString[LanguagesNumber] = {"Время расчёта (миллисекунды):                            ", "Calculation time (milliseconds):                 "};
+extern const string CalculationTimeSecondsString[LanguagesNumber] = {"Время расчёта (секунды):                                 ", "Calculation time (seconds):                      "};
 extern const string VocabularyWordsSizeString[LanguagesNumber] = {"Количество словарных слов:                               ", "Number of vocabulary words:                      "};
 extern const string PossibleWordsSizeString[LanguagesNumber] = {"Количество возможных слов в таблице:                     ", "Number of possible words in the table:           "};
 extern const string MatchedWordsSizeString[LanguagesNumber] = {"Количество совпавших словарных и возможных слов:         ", "Number of matched dictionary and possible words: "};

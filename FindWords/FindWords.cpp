@@ -13,21 +13,35 @@
 
 
 
+struct StringAndBitMask
+{
+	string str;
+	BitMask mask;
+	
+	StringAndBitMask(string str, BitMask mask) 
+	{
+		this->str = str;
+		this->mask = mask;
+	}
+};
+
+
 void createMenu();
-vector<pair<string, BitMask>> findAllPossibleWords();
-vector<pair<string, BitMask>> f(string word, int x, int y, BitMask mask);
+vector<StringAndBitMask> findAllPossibleWords();
+void f(string word, unsigned int x, unsigned int y, BitMask mask, vector<StringAndBitMask>& possibleWords);
 void openDictionary(string filename = "dictionary.txt");
 void changeDictionary();
-void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string, BitMask>> possibleWords);
+void outputResult(vector<StringAndBitMask> matchedWords, vector<StringAndBitMask> possibleWords);
 void printColorChar(char ch, WORD attribute);
-pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeResults(vector<pair<string, BitMask>> matchedWords);
-void outputMatchedWords(vector<pair<string, BitMask>> matchedWords);
+pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeResults(vector<StringAndBitMask> matchedWords);
+void outputMatchedWords(vector<StringAndBitMask> matchedWords);
 WORD* createAttributesArray(unsigned int max);
-void outputTables(vector<pair<string, BitMask>> matchedWords, vector<vector<unsigned int>> decodedResults, WORD* attrs);
-void outputCombinationResults(vector<pair<string, BitMask>> matchedWords);
+void outputTables(vector<StringAndBitMask> matchedWords, vector<vector<unsigned int>> decodedResults, WORD* attrs);
+void outputCombinationResults(vector<StringAndBitMask> matchedWords);
 bool comparator(const string &a, const string &b);
-void f2(BitSet &mask, BitSet indexes, unsigned int start);
-void ffff(vector<pair<string, BitMask>> matchedWords);
+void f2(BitSet mask, BitSet indexes, unsigned int start);
+pair<unsigned int, unsigned int> findMinimumMatchPoint(vector<StringAndBitMask> matchedWords);
+void ffff(vector<StringAndBitMask> matchedWords);
 void calculate();
 unsigned int inputPositiveNumber();
 void inputTable();
@@ -37,8 +51,47 @@ string getVocabularySizeStr();
 void changeMinAndMaxWordLength();
 
 
-const unsigned int attributesLength = 8;
-const WORD attributes[attributesLength] = {FOREGROUND_RED, FOREGROUND_GREEN, FOREGROUND_BLUE, FOREGROUND_INTENSITY, BACKGROUND_RED, BACKGROUND_GREEN, BACKGROUND_BLUE,  BACKGROUND_INTENSITY};	
+const unsigned int attributesLength = 16;
+
+const WORD attributesBackground[attributesLength] = {
+	0,
+	BACKGROUND_RED, 
+	BACKGROUND_GREEN, 
+	BACKGROUND_BLUE, 
+	BACKGROUND_INTENSITY,
+	BACKGROUND_RED   | BACKGROUND_GREEN,
+	BACKGROUND_RED   | BACKGROUND_BLUE,
+	BACKGROUND_RED   | BACKGROUND_INTENSITY,
+	BACKGROUND_GREEN | BACKGROUND_BLUE,
+	BACKGROUND_GREEN | BACKGROUND_INTENSITY,
+	BACKGROUND_BLUE  | BACKGROUND_INTENSITY,
+	BACKGROUND_RED   | BACKGROUND_GREEN | BACKGROUND_BLUE,
+	BACKGROUND_RED   | BACKGROUND_GREEN | BACKGROUND_INTENSITY,
+	BACKGROUND_RED   | BACKGROUND_BLUE  | BACKGROUND_INTENSITY, 
+	BACKGROUND_GREEN | BACKGROUND_BLUE  | BACKGROUND_INTENSITY,
+	BACKGROUND_RED   | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY
+};
+
+
+const WORD attributesForeground[attributesLength] = {
+	FOREGROUND_RED, 
+	FOREGROUND_GREEN, 
+	FOREGROUND_BLUE, 
+	FOREGROUND_INTENSITY,
+	FOREGROUND_RED   | FOREGROUND_GREEN,
+	FOREGROUND_RED   | FOREGROUND_BLUE,
+	FOREGROUND_RED   | FOREGROUND_INTENSITY,
+	FOREGROUND_GREEN | FOREGROUND_BLUE,
+	FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+	FOREGROUND_BLUE  | FOREGROUND_INTENSITY,
+	FOREGROUND_RED   | FOREGROUND_GREEN | FOREGROUND_BLUE,
+	FOREGROUND_RED   | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
+	FOREGROUND_RED   | FOREGROUND_BLUE  | FOREGROUND_INTENSITY, 
+	FOREGROUND_GREEN | FOREGROUND_BLUE  | FOREGROUND_INTENSITY,
+	FOREGROUND_RED   | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
+	0
+};
+
 
 const int dx[4] = { 1, -1, 0, 0 };
 const int dy[4] = { 0, 0, 1, -1 };
@@ -46,6 +99,7 @@ const int dy[4] = { 0, 0, 1, -1 };
 unsigned int n;
 unsigned int m;
 char** matrix;
+BitMask originalBitMask;
 
 unsigned int minLength = 4;
 unsigned int maxLength = 10;
@@ -82,59 +136,42 @@ int main()
 
 void createMenu()
 {
-	function<void()> funcs[fw::MenuItemsNumber] = { []() { inputTable(); calculate(); }, 
-		[]() { needFindCombination = !needFindCombination; }, 
-		changeMinAndMaxWordLength, changeDictionary, []() { exit(0); } };
-		
 	MenuItem* items = new MenuItem[fw::MenuItemsNumber];
-	for (unsigned int i = 0; i < fw::MenuItemsNumber; i++) {
-		if (i + 1 == 2) {
-			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i], getStateOfNeedFindCombination);
-		} else if (i + 1 == 3) {
-			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i], getMinMaxLengthsStr);
-		} else if (i + 1 == 4) {
-			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i], getVocabularySizeStr);
-		} else {
-			items[i] = MenuItem(fw::MenuConstants::MenuItemsStrings[i], fw::LanguagesNumber, funcs[i]);
-		}
-	}
+	items[0] = MenuItem(fw::MenuConstants::MenuItemsStrings[0], fw::LanguagesNumber, []() { inputTable(); calculate(); });
+	items[1] = MenuItem(fw::MenuConstants::MenuItemsStrings[1], fw::LanguagesNumber, []() { needFindCombination = !needFindCombination; }, getStateOfNeedFindCombination);
+	items[2] = MenuItem(fw::MenuConstants::MenuItemsStrings[2], fw::LanguagesNumber, changeMinAndMaxWordLength, getMinMaxLengthsStr);
+	items[3] = MenuItem(fw::MenuConstants::MenuItemsStrings[3], fw::LanguagesNumber, changeDictionary, getVocabularySizeStr);
+	items[4] = MenuItem(fw::MenuConstants::MenuItemsStrings[4], fw::LanguagesNumber, []() { exit(0); });
 	
-	BaseMenuItem auxItems[fw::AuxiliaryMenuItemsNumber];
-	for (unsigned int i = 0; i < fw::AuxiliaryMenuItemsNumber; i++) {
-		auxItems[i] = BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[i], fw::LanguagesNumber);
-	}
-	Menu::AnotherMenuItems auxItemsStruct = { auxItems[0], auxItems[1], auxItems[2] };
+	Menu::AnotherMenuItems auxItems = { 
+		BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[0], fw::LanguagesNumber), 
+		BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[1], fw::LanguagesNumber), 
+		BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[2], fw::LanguagesNumber)
+	};
 	
-	mainmenu = new Menu(items, auxItemsStruct, fw::MenuItemsNumber, fw::LanguagesNumber);
+	mainmenu = new Menu(items, auxItems, fw::MenuItemsNumber, fw::LanguagesNumber);
 	mainmenu->draw();
 }
 
 
-vector<pair<string, BitMask>> findAllPossibleWords()
-{
-	vector<pair<string, BitMask>> a;
-
-	BitMask mask(n, m);
-	for (unsigned int i = 0; i < n; i++) {
-		for (unsigned int j = 0; j < m; j++) {
-			mask[i][j] = (matrix[i][j] == ' ');
-		}
-	}
+vector<StringAndBitMask> findAllPossibleWords()
+{	
+	vector<StringAndBitMask> a;
 	
 	for (unsigned int i = 0; i < n; i++) {
 		for (unsigned int j = 0; j < m; j++) {
-			if (!mask[i][j]) {
-				mask[i][j] = true;
-				vector<pair<string, BitMask>> q = f(string(1, matrix[i][j]), i, j, mask);
-				mask[i][j] = false;
-				for (unsigned int h = 0; h < q.size(); h++) {
-					for (unsigned int k = 0; k < n; k++) {
-						for (unsigned int g = 0; g < n; g++) {
-							q[h].second[k][g] -= mask[k][g];
-						}
-					}
-					a.push_back(q[h]);
-				}
+			if (!originalBitMask[i][j]) {
+				originalBitMask[i][j] = true;
+				f(string(1, matrix[i][j]), i, j, originalBitMask, a);
+				originalBitMask[i][j] = false;
+			}
+		}
+	}
+	
+	for (unsigned int k = 0; k < a.size(); k++) {
+		for (unsigned int i = 0; i < n; i++) {
+			for (unsigned int j = 0; j < m; j++) {
+				a[k].mask[i][j] -= originalBitMask[i][j];
 			}
 		}
 	}
@@ -143,41 +180,27 @@ vector<pair<string, BitMask>> findAllPossibleWords()
 }
 
 
-vector<pair<string, BitMask>> f(string word, int x, int y, BitMask mask)
+void f(string word, unsigned int x, unsigned int y, BitMask mask, vector<StringAndBitMask>& possibleWords)
 {
-	vector<pair<string, BitMask>> newWords;
-	
 	if (word.size() >= minLength) {
-		newWords.push_back(make_pair(word, mask));
+		possibleWords.push_back(StringAndBitMask(word, mask));
 	}
 	
 	if (word.size() >= maxLength || !vocabularyWords->findSubstr(word)) {
-		return newWords;
+		return;
 	}
-	
-	int x2, y2;
-	
-	BitMask mask2(mask);
-	
-	string word2;
-	vector<pair<string, BitMask>> temp; 
-	
+
 	for (unsigned int i = 0; i < 4; i++) {
-		x2 = x + dx[i];
-		y2 = y + dy[i];
-		if (x2 >= 0 && x2 < n && y2 >= 0 && y2 < m) {
+		unsigned int x2 = x + dx[i];
+		unsigned int y2 = y + dy[i];
+		if (x2 < n && y2 < m) {
 			if (!mask[x2][y2]) {
-				mask2[x2][y2] = true;
-				word2 = word + matrix[x2][y2];
-				temp = f(word2, x2, y2, mask2);
-				for (unsigned int j = 0; j < temp.size(); j++) {
-					newWords.push_back(temp[j]);
-				}
-				mask2[x2][y2] = false;
+				mask[x2][y2] = true;
+				f(word + matrix[x2][y2], x2, y2, mask, possibleWords);
+				mask[x2][y2] = false;
 			}
 		}
 	}
-	return newWords;
 }
 
 
@@ -221,7 +244,7 @@ pair<unsigned long long, string> getCalculationTime()
 }
 
 
-void outputResult(vector<pair<string, BitMask>> matchedWords, vector<pair<string, BitMask>> possibleWords)
+void outputResult(vector<StringAndBitMask> matchedWords, vector<StringAndBitMask> possibleWords)
 {
 	pair<unsigned long long, string> calculationTimePair = getCalculationTime();
 	cout << endl << calculationTimePair.second
@@ -249,11 +272,11 @@ void printColorChar(char ch, WORD attribute)
 }
 
 
-void outputMatchedWords(vector<pair<string, BitMask>> matchedWords)
+void outputMatchedWords(vector<StringAndBitMask> matchedWords)
 {
 	vector<string> tempwords;
 	for (unsigned int i = 0; i < matchedWords.size(); i++) {
-		tempwords.push_back(matchedWords[i].first);
+		tempwords.push_back(matchedWords[i].str);
 	}
 	sort(tempwords.begin(), tempwords.end(), comparator);
 	tempwords.resize(unique(tempwords.begin(), tempwords.end()) - tempwords.begin());
@@ -267,7 +290,7 @@ void outputMatchedWords(vector<pair<string, BitMask>> matchedWords)
 }
 
 
-pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeResults(vector<pair<string, BitMask>> matchedWords)
+pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeResults(vector<StringAndBitMask> matchedWords)
 {
 	vector<string> words;
 	vector<vector<unsigned int>> decodedResults;
@@ -278,7 +301,7 @@ pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeRes
 		for (unsigned int j = 0; j < matchedWords.size(); j++) {
 			if (results[i][j]) {
 				temp.push_back(j);
-				words.push_back(matchedWords[j].first);
+				words.push_back(matchedWords[j].str);
 				k++;
 			}
 		}
@@ -294,18 +317,16 @@ pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> decodeRes
 WORD* createAttributesArray(unsigned int max)
 {
 	WORD* attrs = new WORD[max];
+	unsigned int biggerThan = max / (attributesLength * attributesLength - attributesLength) + 1;
 	unsigned int counter = 0;
-	for (unsigned int i = 0; i < attributesLength; i++) {
-		for (unsigned int j = 0; j < attributesLength; j++) {
-			for (unsigned int k = 0; k < attributesLength; k++) {
-				if (counter >= max) {
-					break;
-				}
-				if (!(i % (attributesLength / 2) == j % (attributesLength / 2) 
-				      || i % (attributesLength / 2) == k % (attributesLength / 2) 
-				      || j % (attributesLength / 2) == k % (attributesLength / 2))) {
-					attrs[counter] = attributes[i] | attributes[j] | attributes[k];
-					counter++;
+	for (unsigned int k = 0; k < biggerThan; k++) {
+		for (unsigned int i = 0; i < attributesLength; i++) {
+			for (unsigned int j = 0; j < attributesLength; j++) {
+				if (i != j) {
+					attrs[counter] = attributesBackground[i] | attributesForeground[j];
+					if (++counter >= max) {
+						return attrs;
+					}
 				}
 			}
 		}
@@ -314,7 +335,7 @@ WORD* createAttributesArray(unsigned int max)
 }
 
 
-void outputTables(vector<pair<string, BitMask>> matchedWords, vector<vector<unsigned int>> decodedResults, WORD* attrs)
+void outputTables(vector<StringAndBitMask> matchedWords, vector<vector<unsigned int>> decodedResults, WORD* attrs)
 {
 	cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::ColoredTablesString) << "\n";
 	for (unsigned int h = 0; h < decodedResults.size(); h++) {
@@ -323,13 +344,13 @@ void outputTables(vector<pair<string, BitMask>> matchedWords, vector<vector<unsi
 			for (unsigned int j = 0; j < m; j++) {
 				if (matrix[i][j] != ' ') {
 					for (unsigned int k = 0; k < decodedResults[h].size(); k++) {
-						if (matchedWords[decodedResults[h][k]].second[i][j]) {
+						if (matchedWords[decodedResults[h][k]].mask[i][j]) {
 							printColorChar(matrix[i][j], attrs[k]);
 							break;
 						}
 					}
 				} else {
-					cout << " ";
+					printColorChar(' ', 0);
 				}
 			}
 			cout << endl;
@@ -339,7 +360,7 @@ void outputTables(vector<pair<string, BitMask>> matchedWords, vector<vector<unsi
 }
 
 
-void outputCombinationResults(vector<pair<string, BitMask>> matchedWords)
+void outputCombinationResults(vector<StringAndBitMask> matchedWords)
 {
 	pair<pair<vector<string>, vector<vector<unsigned int>>>, unsigned int> p = decodeResults(matchedWords);
 	vector<string> words = p.first.first;
@@ -375,65 +396,60 @@ bool comparator(const string &a, const string &b)
 }
 
 
-void f2(BitSet &mask, BitSet indexes, unsigned int start)
+void f2(BitSet mask, BitSet indexes, unsigned int start)
 {
+	if (mask.isAllTrue()) {
+		results.push_back(indexes);
+		return;
+	}
 	for (unsigned int i = start; i < matchedWordsSize; i++) {
 		if ((mask & bitsetMasks[i]).isAllFalse()) {
-			BitSet temp(mask);
-			temp |= bitsetMasks[i];
-			if (temp.isAllTrue()) {
-				indexes.set(i, true);
-				results.push_back(indexes);
-				return;
-			}
-			BitSet tempIndexes(indexes);
-			tempIndexes.set(i, true);
-			f2(temp, tempIndexes, i);
+			indexes.set(i, true);
+			f2(mask | bitsetMasks[i], indexes, i);
+			indexes.set(i, false);
 		}
 	}
 }
 
 
-void ffff(vector<pair<string, BitMask>> matchedWords)
+pair<unsigned int, unsigned int> findMinimumMatchPoint(vector<StringAndBitMask> matchedWords)
 {
-	BitSet originalMask(n * m);
+	unsigned int min = ~0, x0 = 0, y0 = 0;
 	for (unsigned int i = 0; i < n; i++) {
 		for (unsigned int j = 0; j < m; j++) {
-			originalMask.set(i * m + j, (matrix[i][j] == ' '));
-		}
-	}
-	
-	matchedWordsSize = matchedWords.size();
-	for (unsigned int i = 0; i < matchedWordsSize; i++) {
-		bitsetMasks.push_back(BitSet(n * m, matchedWords[i].second.getRawMask(), n, m) & ~originalMask);
-	}
-	
-	unsigned int min = 0, x0 = 0, y0 = 0;
-	min = ~min;
-	for (unsigned int i = 0; i < n; i++) {
-		for (unsigned int j = 0; j < m; j++) {
-			unsigned int s = 0;
-			for (unsigned int k = 0; k < matchedWordsSize; k++) {
-				s += matchedWords[k].second[i][j];
+			unsigned int t = 0;
+			for (unsigned int k = 0; k < matchedWords.size(); k++) {
+				t += matchedWords[k].mask[i][j];
 			}
-			if (s < min && s != 0) {
-				min = s;
+			if (t < min && t != 0) {
+				min = t;
 				x0 = i;
 				y0 = j;
 			}
 		}
 	}
+	return make_pair(x0, y0);
+}
+
+
+void ffff(vector<StringAndBitMask> matchedWords)
+{
+	BitSet originalMask(n * m, originalBitMask.getRawMask(), n, m);
+	BitSet negOriginalMask = ~originalMask;
 	
+	matchedWordsSize = matchedWords.size();
 	for (unsigned int i = 0; i < matchedWordsSize; i++) {
-		if (matchedWords[i].second[x0][y0]) {
-			BitSet indexes(matchedWordsSize);
+		bitsetMasks.push_back(BitSet(n * m, matchedWords[i].mask.getRawMask(), n, m) & negOriginalMask);
+	}
+	
+	pair<unsigned int, unsigned int> zeroPoint = findMinimumMatchPoint(matchedWords);
+	
+	BitSet indexes(matchedWordsSize);
+	for (unsigned int i = 0; i < matchedWordsSize; i++) {
+		if (matchedWords[i].mask[zeroPoint.first][zeroPoint.second]) {
 			indexes.set(i, true);
-			BitSet tempMask(bitsetMasks[i] | originalMask);
-			if (!(tempMask).isAllTrue()) {
-				f2(tempMask, indexes, 0);
-			} else {
-				results.push_back(indexes);
-			}
+			f2(bitsetMasks[i] | originalMask, indexes, 0);
+			indexes.set(i, false);
 		}
 	}
 	matchedWordsSize = 0;
@@ -443,10 +459,10 @@ void ffff(vector<pair<string, BitMask>> matchedWords)
 void calculate()
 {
 	Timer timer;
-	vector<pair<string, BitMask>> possibleWords = findAllPossibleWords();
-	vector<pair<string, BitMask>> matchedWords;
+	vector<StringAndBitMask> possibleWords = findAllPossibleWords();
+	vector<StringAndBitMask> matchedWords;
 	for (unsigned int i = 0; i < possibleWords.size(); i++) {
-		if (vocabularyWords->findWord(possibleWords[i].first)) {
+		if (vocabularyWords->findWord(possibleWords[i].str)) {
 			matchedWords.push_back(possibleWords[i]);
 		}
 	}
@@ -490,7 +506,7 @@ void inputTable()
 			matrix[i][j] = ' ';
 		}
 	}
-
+	
 	cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterLettersString) << endl << endl;
 	
 	cin.ignore();
@@ -498,6 +514,13 @@ void inputTable()
 		cin.getline(matrix[i], m + 1, '\n');
 	}
 	cout << endl;
+	
+	originalBitMask = BitMask(n, m);
+	for (unsigned int i = 0; i < n; i++) {
+		for (unsigned int j = 0; j < m; j++) {
+			originalBitMask[i][j] = (matrix[i][j] == ' ');
+		}
+	}
 }
 
 
