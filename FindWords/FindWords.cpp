@@ -51,10 +51,9 @@ string getVocabularySizeStr();
 void changeMinAndMaxWordLength();
 
 
-const unsigned int attributesLength = 16;
+const unsigned int attributesLength = 15;
 
 const WORD attributesBackground[attributesLength] = {
-	0,
 	BACKGROUND_RED, 
 	BACKGROUND_GREEN, 
 	BACKGROUND_BLUE, 
@@ -88,8 +87,7 @@ const WORD attributesForeground[attributesLength] = {
 	FOREGROUND_RED   | FOREGROUND_GREEN | FOREGROUND_INTENSITY,
 	FOREGROUND_RED   | FOREGROUND_BLUE  | FOREGROUND_INTENSITY, 
 	FOREGROUND_GREEN | FOREGROUND_BLUE  | FOREGROUND_INTENSITY,
-	FOREGROUND_RED   | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY,
-	0
+	FOREGROUND_RED   | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY
 };
 
 
@@ -320,10 +318,15 @@ WORD* createAttributesArray(unsigned int max)
 	unsigned int biggerThan = max / (attributesLength * attributesLength - attributesLength) + 1;
 	unsigned int counter = 0;
 	for (unsigned int k = 0; k < biggerThan; k++) {
-		for (unsigned int i = 0; i < attributesLength; i++) {
+		for (unsigned int i = 0; i < attributesLength + 1; i++) {
 			for (unsigned int j = 0; j < attributesLength; j++) {
-				if (i != j) {
-					attrs[counter] = attributesBackground[i] | attributesForeground[j];
+				if ((i - 1) != j) {
+					if (i == 0) {
+						attrs[counter] = attributesForeground[j];
+					} else {
+						attrs[counter] = attributesBackground[i - 1] | attributesForeground[j];
+					}
+					
 					if (++counter >= max) {
 						return attrs;
 					}
