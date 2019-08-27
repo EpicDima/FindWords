@@ -11,12 +11,13 @@ class MenuItem : public BaseMenuItem
 public:
 	MenuItem() {}
 	
+
 	MenuItem(string* item, unsigned int languagesNumber, function<void()> func) 
-		: BaseMenuItem(item, languagesNumber)
+		: BaseMenuItem(item, languagesNumber), func(func)
 	{
-		this->func = func;
 	}
 	
+
 	MenuItem(string* item, unsigned int languagesNumber, function<void()> func, function<string()> valueFunc) 
 		: MenuItem(item, languagesNumber, func)
 	{
@@ -24,6 +25,7 @@ public:
 		this->realTimeValue = true;
 	}
 	
+
 	MenuItem(const MenuItem& b) 
 		: MenuItem(b.item, b.languagesNumber, b.func)
 	{
@@ -32,7 +34,18 @@ public:
 			this->realTimeValue = true;
 		}
 	}
+
+
+	MenuItem& operator=(const MenuItem& b)
+	{
+		if (this != &b) {
+			this->~MenuItem();
+			new (this) MenuItem(b);
+		}
+		return *this;
+	}
 	
+
 	string getString(unsigned int languageIndex, unsigned int maxLength)
 	{
 		assert(languageIndex >= 0 && languageIndex < languagesNumber);
@@ -45,6 +58,7 @@ public:
 		}
 	}
 	
+
 	function<void()> func;
 	bool realTimeValue = false;
 	function<string()> valueFunc;

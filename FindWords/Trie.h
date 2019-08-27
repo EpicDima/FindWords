@@ -3,7 +3,6 @@
 
 
 #include <string>
-//#include <map>
 #include <unordered_map>
 
 using namespace std;
@@ -19,19 +18,19 @@ public:
 	}
 	
 	
-	void insert(string word)
+	void insert(string& word)
 	{
 		root->insert(word, word.size(), 0);
 	}
 	
 	
-	bool findSubstr(string substr)
+	bool findSubstr(string& substr)
 	{
 		return root->findSubstr(substr, substr.size(), 0);
 	}
 	
 	
-	bool findWord(string word)
+	bool findWord(string& word)
 	{
 		return root->findWord(word, word.size(), 0);
 	}
@@ -54,7 +53,7 @@ private:
 		}
 		
 		
-		void insert(string str, unsigned int size, unsigned int index)
+		void insert(string& str, size_t size, unsigned int index)
 		{
 			if (letters.count(str[index])) {
 			    if (index < size - 1) {
@@ -74,7 +73,7 @@ private:
 		}
 		
 		
-		bool findSubstr(string &substr, unsigned int size, unsigned int index)
+		bool findSubstr(string& substr, size_t size, unsigned int index)
 		{
 			if (index == size) {
 				return true;
@@ -86,7 +85,7 @@ private:
 		}
 		
 		
-		bool findWord(string &word, unsigned int size, unsigned int index)
+		bool findWord(string& word, size_t size, unsigned int index)
 		{
 			if (index == size && this->wholeWord) {
 				return true;

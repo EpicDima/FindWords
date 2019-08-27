@@ -9,8 +9,10 @@
 #include <conio.h>
 
 
-const WORD defaultFontAttribute = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-const WORD activeFontAttribute = BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
+const WORD defaultFontAttribute 
+	= FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+const WORD activeFontAttribute 
+	= BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY;
 
 
 class Menu
@@ -24,14 +26,16 @@ public:
 		BaseMenuItem pause;
 	};
 	
-	Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, unsigned int menuLength, unsigned int languagesNumber) {
+
+	Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, 
+		unsigned int menuLength, unsigned int languagesNumber)
+		: anotherMenuItems(anotherMenuItems), menuLength(menuLength), 
+		languagesNumber(languagesNumber)
+	{
 		this->menuItems = new MenuItem[menuLength];
 		for (unsigned int i = 0; i < menuLength; i++) {
 			this->menuItems[i] = MenuItem(menuItems[i]);
 		}
-		this->anotherMenuItems = anotherMenuItems;
-		this->menuLength = menuLength;
-		this->languagesNumber = languagesNumber;
 	}
 	
 	
@@ -50,7 +54,8 @@ public:
 			case 77: moveRight(); break;
 			case 80: moveDown(); break;
 			case 72: moveUp(); break;
-			case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57: moveByNumber(k - 48); break;
+			case 49: case 50: case 51: case 52: case 53: case 54: 
+			case 55: case 56: case 57: moveByNumber(k - 48); break;
 			default: break;
 		}
 		
@@ -67,31 +72,35 @@ public:
 		COORD info = getConsoleInfo();
 		setCursorPosition(0, 0);
 		DWORD written;
-		FillConsoleOutputCharacterA(handle, ' ', info.X * info.Y, { 0, 0 }, &written);
-	    FillConsoleOutputAttribute(handle, defaultFontAttribute, info.X * info.Y, { 0, 0 }, &written);
+		FillConsoleOutputCharacterA(handle, ' ', info.X * info.Y, 
+			{ 0, 0 }, &written);
+	    FillConsoleOutputAttribute(handle, defaultFontAttribute, 
+			info.X * info.Y, { 0, 0 }, &written);
 		setCursorPosition(0, 0);
 	}
+
 	
 	unsigned int maxMenuItemLength()
 	{
-		unsigned int maxLength = anotherMenuItems.menu[activeLanguage].length();
+		size_t maxLength = anotherMenuItems.menu[activeLanguage].size();
 		if (anotherMenuItems.choose[activeLanguage].length() > maxLength) {
-			maxLength = anotherMenuItems.choose[activeLanguage].length();
+			maxLength = anotherMenuItems.choose[activeLanguage].size();
 		}
-		for (int i = 0; i < menuLength; i++) {
+		for (unsigned int i = 0; i < menuLength; i++) {
 			if (menuItems[i][activeLanguage].length() > maxLength) {
-				maxLength = menuItems[i][activeLanguage].length();
+				maxLength = menuItems[i][activeLanguage].size();
 			}
 		}
-		return maxLength;
+		return static_cast<unsigned int>(maxLength);
 	}
 	
+
 	void draw()
 	{
 		clear();
 		unsigned int maxLength = maxMenuItemLength();
 		cout << anotherMenuItems.menu[activeLanguage] << endl;
-		for (int i = 0; i < menuLength; i++) {
+		for (unsigned int i = 0; i < menuLength; i++) {
 			if (i == activeItem) {
 				colorPrint(menuItems[i].getString(activeLanguage, maxLength));
 			} else {
@@ -101,6 +110,7 @@ public:
 		}
 		cout << anotherMenuItems.choose[activeLanguage] << activeItem + 1;
 	}
+
 	
 	void enter()
 	{
@@ -112,6 +122,7 @@ public:
 		}
 	}
 	
+
 	void moveUp()
 	{
 		if (activeItem > 0) {
@@ -121,6 +132,7 @@ public:
 		}
 		draw();
 	}
+
 	
 	void moveDown()
 	{
@@ -132,6 +144,7 @@ public:
 		draw();
 	}
 	
+
 	void moveRight()
 	{
 		if (activeLanguage > 0) {
@@ -142,6 +155,7 @@ public:
 		draw();
 	}
 	
+
 	void moveLeft()
 	{
 		if (activeLanguage < languagesNumber - 1) {
@@ -151,6 +165,7 @@ public:
 		}
 		draw();
 	}
+
 	
 	void moveByNumber(unsigned int number)
 	{
@@ -159,12 +174,14 @@ public:
 			draw();
 		}
 	}
+
 	
 	template<typename T>
 	T chooseElementFromArrayByActiveLanguage(T* array)
 	{
 		return array[activeLanguage];
 	}
+
 
 private:
 	unsigned int menuLength;
@@ -178,7 +195,7 @@ private:
 	
 	HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 	
-	void colorPrint(string s)
+	void colorPrint(string&& s)
 	{	
 		SetConsoleTextAttribute(handle, activeFontAttribute);
 		cout << s;

@@ -6,13 +6,12 @@
 class BitMask
 {
 public:
-	BitMask() {}
-	
-	BitMask(unsigned int nRows, unsigned int nCols)
+	BitMask() : nRows(0), nCols(0), mask(nullptr)
+	{}
+
+
+	BitMask(unsigned int nRows, unsigned int nCols) : nRows(nRows), nCols(nCols)
 	{
-		this->nRows = nRows;
-		this->nCols = nCols;
-		
 		mask = new bool* [nRows];
 		for (unsigned int i = 0; i < nRows; i++) {
 			mask[i] = new bool[nCols];
@@ -32,6 +31,8 @@ public:
 	
 	~BitMask()
 	{
+		// Если раскомментировать появляетсся ошибка с кучей (файл ntdll.dll)
+		// Нужно как-то всё тщательно проанализировать, а пока будет утечка памяти
 		/*
 		for (unsigned int i = 0; i < nRows; i++) {
 			delete[] mask[i];
@@ -39,7 +40,17 @@ public:
 		delete[] mask;
 		*/
 	}
-	
+
+
+	BitMask& operator=(const BitMask& b)
+	{
+		if (this != &b) {
+			this->~BitMask();
+			new (this) BitMask(b);
+		}
+		return *this;
+	}
+
 	
 	bool* operator[] (const unsigned int index)
 	{
@@ -57,5 +68,6 @@ private:
 	unsigned int nRows, nCols;
 	bool** mask;
 };
+
 
 #endif
