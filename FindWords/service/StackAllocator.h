@@ -2,7 +2,7 @@
 #define STACK_ALLOCATOR_H
 
 
-#include <stack>
+#include <vector>
 
 
 typedef unsigned char byte;
@@ -14,13 +14,15 @@ class StackAllocator
 public:
     StackAllocator(ull_t memorySize) : size(memorySize)
     {
-        buffer = new byte[size];
+        buffer = new byte[memorySize];
+        previousOffsets.reserve(memorySize / 128 > 128 ? memorySize / 128 : 128);
     }
 
 
     ~StackAllocator()
     {
-        delete [] buffer;
+        delete[] buffer;
+        previousOffsets.clear();
     }
 
 
@@ -31,27 +33,36 @@ public:
         }
 
         byte* allocatedPointer = buffer + offset;
-        previousOffsets.push(offset);
+        previousOffsets.push_back(offset);
+        previousOffsetsLength++;
         offset += allocatedSize;
         return allocatedPointer;
     }
 
 
+    void deallocate(ull_t numDeallocations)
+    {
+        for (ull_t i = 1; i < numDeallocations; i++) {
+            previousOffsets.pop_back();
+            previousOffsetsLength--;
+        }
+        offset = previousOffsets[previousOffsetsLength--];
+        previousOffsets.pop_back();
+    }
+
+
     void deallocate()
     {
-        if (!previousOffsets.empty()) {
-            offset = previousOffsets.top();
-            previousOffsets.pop();
-        }
+        offset = previousOffsets[previousOffsetsLength--];
+        previousOffsets.pop_back();
     }
 
 
     void reset()
     {
         offset = 0;
-        while (!previousOffsets.empty()) {
-            previousOffsets.pop();
-        }
+        previousOffsetsLength = 0;
+        previousOffsets.clear();
     }
 
 
@@ -59,8 +70,8 @@ private:
     byte* buffer;
     ull_t size;
     ull_t offset = 0;
-    std::stack<ull_t> previousOffsets;
-
+    ull_t previousOffsetsLength = 0;
+    std::vector<ull_t> previousOffsets;
 };
 
 
