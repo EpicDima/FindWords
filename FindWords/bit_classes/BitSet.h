@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-#include "../service/StackAllocator.h"
+#include "../service/LinearAllocator.h"
 
 
 using namespace std;
@@ -24,6 +24,7 @@ const ull_t ULL_MAX_VALUE = ~0ULL;
 class BitSet
 {
 public:
+
     BitSet() : nBits(0), count(0), data(nullptr) {}
 
 
@@ -35,7 +36,7 @@ public:
             count++;
             lastmask = ~(~lastmask >> (TYPESIZE_IN_BITS - difference));
         }
-        data = reinterpret_cast<ull_t*>(calloc(count, TYPESIZE_IN_BYTES));   // сразу обнуляет память
+        data = reinterpret_cast<ull_t*>(calloc(count, TYPESIZE_IN_BYTES));
     }
 
 
@@ -64,17 +65,15 @@ public:
     {
         this->data = reinterpret_cast<ull_t*>(malloc(this->count * TYPESIZE_IN_BYTES));
 
-        // оптимизация под небольшие массивы, такие как обычно в FindWords (примерно nBits < 500)
         for (ull_t i = 0; i < this->count; i++) {
             this->data[i] = b.data[i];
         }
 
-        // для общего использования
         // memcpy(this->data, b.data, b.count * TYPESIZE_IN_BYTES);
     }
 
 
-    BitSet(ull_t nBits, StackAllocator& allocator) : nBits(nBits), usingAllocator(true)
+    BitSet(ull_t nBits, LinearAllocator& linearAllocator) : nBits(nBits), usingAllocator(true)
     {
         count = nBits / TYPESIZE_IN_BITS;
         ull_t difference = nBits % TYPESIZE_IN_BITS;
@@ -83,11 +82,11 @@ public:
             lastmask = ~(~lastmask >> (TYPESIZE_IN_BITS - difference));
         }
         data = reinterpret_cast<ull_t*>(
-            memset(allocator.allocate(count * TYPESIZE_IN_BYTES), 0, count * TYPESIZE_IN_BYTES));
+            memset(linearAllocator.allocate(count * TYPESIZE_IN_BYTES), 0, count * TYPESIZE_IN_BYTES));
     }
 
 
-    BitSet(ull_t nBits, bool** a, ull_t n, ull_t m, StackAllocator& allocator) : BitSet(nBits, allocator)
+    BitSet(ull_t nBits, bool** a, ull_t n, ull_t m, LinearAllocator& linearAllocator) : BitSet(nBits, linearAllocator)
     {
         ull_t mask = 1;
         ull_t k = 0;
@@ -108,10 +107,10 @@ public:
     }
 
 
-    BitSet(const BitSet& b, StackAllocator& allocator)
-     : nBits(b.nBits), count(b.count), lastmask(b.lastmask), usingAllocator(true)
+    BitSet(const BitSet& b, LinearAllocator& linearAllocator)
+        : nBits(b.nBits), count(b.count), lastmask(b.lastmask), usingAllocator(true)
     {
-        this->data = reinterpret_cast<ull_t*>(allocator.allocate(b.count * TYPESIZE_IN_BYTES));
+        this->data = reinterpret_cast<ull_t*>(linearAllocator.allocate(b.count * TYPESIZE_IN_BYTES));
         for (ull_t i = 0; i < this->count; i++) {
             this->data[i] = b.data[i];
         }
@@ -211,7 +210,6 @@ public:
         }
         return true;
     }
-
 
 private:
     ull_t nBits;

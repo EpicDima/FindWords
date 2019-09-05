@@ -2,6 +2,9 @@
 #define BITMASK_H
 
 
+#include <new>
+
+
 class BitMask
 {
 public:
@@ -29,25 +32,21 @@ public:
 
     ~BitMask()
     {
-        // Если раскомментировать появляетсся ошибка с кучей (файл ntdll.dll)
-        // Нужно как-то всё тщательно проанализировать, а пока будет утечка памяти
-        /*
-        for (unsigned int i = 0; i < nRows; i++) {
-            delete[] mask[i];
-        }
-        delete[] mask;
-        */
+        // for (unsigned int i = 0; i < nRows; i++) {
+        //     delete[] mask[i];
+        // }
+        // delete[] mask;
     }
 
 
-	BitMask& operator=(const BitMask& b)
-	{
-		if (this != &b) {
-			this->~BitMask();
-			new (this) BitMask(b);
-		}
-		return *this;
-	}
+    BitMask& operator=(const BitMask& b)
+    {
+        if (this != &b) {
+            this->~BitMask();
+            new (this) BitMask(b);
+        }
+        return *this;
+    }
 
 
     bool* operator[](const unsigned int index)
@@ -60,7 +59,6 @@ public:
     {
         return mask;
     }
-
 
 private:
     unsigned int nRows, nCols;

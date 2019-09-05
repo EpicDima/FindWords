@@ -20,7 +20,7 @@ public:
     }
 
 
-    unsigned long long elapsedNanoseconds() const
+    unsigned long long elapsedNanoseconds()
     {
         return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start)
             .count();

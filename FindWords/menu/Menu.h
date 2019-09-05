@@ -25,7 +25,7 @@ public:
 
 
     Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, unsigned int menuLength, unsigned int languagesNumber)
-     : anotherMenuItems(anotherMenuItems), menuLength(menuLength), languagesNumber(languagesNumber)
+     : menuLength(menuLength), languagesNumber(languagesNumber), anotherMenuItems(anotherMenuItems)
     {
         this->menuItems = new MenuItem[menuLength];
         for (unsigned int i = 0; i < menuLength; i++) {
@@ -194,6 +194,7 @@ private:
 
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
+
     void colorPrint(string&& s)
     {
         SetConsoleTextAttribute(handle, activeFontAttribute);
@@ -201,11 +202,13 @@ private:
         SetConsoleTextAttribute(handle, defaultFontAttribute);
     }
 
+
     void setCursorPosition(int x, int y)
     {
         COORD xy{static_cast<short>(x), static_cast<short>(y)};
         SetConsoleCursorPosition(handle, xy);
     }
+
 
     COORD getConsoleInfo()
     {

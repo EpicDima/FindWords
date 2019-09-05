@@ -1,4 +1,4 @@
-#include "service/StackAllocator.h"
+#include "service/LinearAllocator.h"
 #include "service/Timer.h"
 
 #include "bit_classes/BitMask.h"
@@ -74,7 +74,8 @@ unsigned int matchedWordsSize = 0;
 
 Menu* mainmenu;
 
-StackAllocator stackAllocator(25 * 1024 * 1024);   // 25Mb just in case
+LinearAllocator linearAllocator(25 * 1024 * 1024);   // 25Mb just in case
+unsigned int iterationSize;
 
 
 int main()
@@ -372,18 +373,18 @@ void f2(BitSet& mask, BitSet& indexes, unsigned int start)
 {
     if (mask.isAllTrue()) {
         results.push_back(indexes);
-        stackAllocator.deallocate(4);
+        linearAllocator.deallocate(iterationSize);
         return;
     }
     for (unsigned int i = start; i < matchedWordsSize; i++) {
         if ((mask & bitsetMasks[i]).isAllFalse()) {
-            BitSet* temp1 = new (stackAllocator.allocate(sizeof(BitSet))) BitSet(mask | bitsetMasks[i], stackAllocator);
-            BitSet* temp2 = new (stackAllocator.allocate(sizeof(BitSet))) BitSet(indexes, stackAllocator);
+            BitSet* temp1 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(mask | bitsetMasks[i], linearAllocator);
+            BitSet* temp2 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(indexes, linearAllocator);
             temp2->set(i, true);
             f2(*temp1, *temp2, i);
         }
     }
-    stackAllocator.deallocate(4);
+    linearAllocator.deallocate(iterationSize);
 }
 
 
@@ -409,6 +410,8 @@ pair<unsigned int, unsigned int> findMinimumMatchPoint(vector<StringAndBitMask>&
 
 void ffff(vector<StringAndBitMask> matchedWords)
 {
+    iterationSize = 2 * (sizeof(BitSet) + numRows * numCols / TYPESIZE_IN_BYTES + (numRows * numCols % TYPESIZE_IN_BITS == 0 ? 0 : 1));
+    
     BitSet originalMask(numRows * numCols, originalBitMask.getRawMask(), numRows, numCols);
     BitSet negOriginalMask = ~originalMask;
 
@@ -424,8 +427,8 @@ void ffff(vector<StringAndBitMask> matchedWords)
     for (unsigned int i = 0; i < matchedWordsSize; i++) {
         if (matchedWords[i].mask[zeroPoint.first][zeroPoint.second]) {
             BitSet* temp1 =
-                new (stackAllocator.allocate(sizeof(BitSet))) BitSet(bitsetMasks[i] | originalMask, stackAllocator);
-            BitSet* temp2 = new (stackAllocator.allocate(sizeof(BitSet))) BitSet(indexes, stackAllocator);
+                new (linearAllocator.allocate(sizeof(BitSet))) BitSet(bitsetMasks[i] | originalMask, linearAllocator);
+            BitSet* temp2 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(indexes, linearAllocator);
             temp2->set(i, true);
             f2(*temp1, *temp2, 0);
         }
@@ -455,7 +458,7 @@ void calculate()
 
     bitsetMasks.clear();
     results.clear();
-    stackAllocator.reset();
+    linearAllocator.reset();
 }
 
 

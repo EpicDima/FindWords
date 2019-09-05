@@ -17,6 +17,12 @@ public:
     }
 
 
+    ~Trie()
+    {
+        delete root;
+    }
+
+
     void insert(string& word)
     {
         root->insert(word, word.size(), 0);
@@ -32,12 +38,6 @@ public:
     bool findWord(string& word)
     {
         return root->findWord(word, word.size(), 0);
-    }
-
-
-    ~Trie()
-    {
-        delete root;
     }
 
 
