@@ -8,24 +8,9 @@
 class Timer
 {
 public:
-    Timer()
-    {
-        reset();
-    }
-
-
-    void reset()
-    {
-        start = std::chrono::high_resolution_clock::now();
-    }
-
-
-    unsigned long long elapsedNanoseconds()
-    {
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start)
-            .count();
-    }
-
+    Timer();
+    void reset();
+    uint64_t elapsedNanoseconds();
 
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start;

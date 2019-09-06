@@ -3,65 +3,26 @@
 
 
 #include <new>
+#include <stdint.h>
 
 
 class BitMask
 {
 public:
     BitMask() : nRows(0), nCols(0), mask(nullptr) {}
+    BitMask(uint64_t nRows, uint64_t nCols);
+    BitMask(const BitMask& b);
 
+    ~BitMask();
 
-    BitMask(unsigned int nRows, unsigned int nCols) : nRows(nRows), nCols(nCols)
-    {
-        mask = new bool*[nRows];
-        for (unsigned int i = 0; i < nRows; i++) {
-            mask[i] = new bool[nCols];
-        }
-    }
+    BitMask& operator=(const BitMask& b);
 
+    bool* operator[](const uint64_t index);
 
-    BitMask(const BitMask& b) : BitMask(b.nRows, b.nCols)
-    {
-        for (unsigned int i = 0; i < nRows; i++) {
-            for (unsigned int j = 0; j < nCols; j++) {
-                this->mask[i][j] = b.mask[i][j];
-            }
-        }
-    }
-
-
-    ~BitMask()
-    {
-        // for (unsigned int i = 0; i < nRows; i++) {
-        //     delete[] mask[i];
-        // }
-        // delete[] mask;
-    }
-
-
-    BitMask& operator=(const BitMask& b)
-    {
-        if (this != &b) {
-            this->~BitMask();
-            new (this) BitMask(b);
-        }
-        return *this;
-    }
-
-
-    bool* operator[](const unsigned int index)
-    {
-        return mask[index];
-    }
-
-
-    bool** getRawMask()
-    {
-        return mask;
-    }
+    bool** getRawMask();
 
 private:
-    unsigned int nRows, nCols;
+    uint64_t nRows, nCols;
     bool** mask;
 };
 

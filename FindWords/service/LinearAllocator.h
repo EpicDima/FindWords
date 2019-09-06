@@ -3,53 +3,25 @@
 
 
 #include <cassert>
-
-typedef unsigned char byte;
-typedef unsigned long long ull_t;
+#include <stdint.h>
 
 
 class LinearAllocator
 {
 public:
-    LinearAllocator(ull_t memorySize) : size(memorySize)
-    {
-        assert(memorySize > 0);
-        buffer = new byte[memorySize];
-    }
+    LinearAllocator(uint64_t memorySize);
+    ~LinearAllocator();
 
+    void* allocate(uint64_t allocatedSize);
+    void deallocate(uint64_t deallocatedSize);
 
-    ~LinearAllocator()
-    {
-        delete[] buffer;
-    }
-
-
-    void* allocate(ull_t allocatedSize)
-    {
-        assert(allocatedSize > 0 && (size - offset) >= allocatedSize);
-        byte* allocatedPointer = buffer + offset;
-        offset += allocatedSize;
-        return allocatedPointer;
-    }
-
-
-    void deallocate(ull_t deallocatedSize)
-    {
-        assert(offset >= deallocatedSize);
-        offset -= deallocatedSize;
-    }
-
-
-    void reset()
-    {
-        offset = 0;
-    }
+    void reset();
 
 
 private:
-    byte* buffer;
-    ull_t size;
-    ull_t offset = 0;
+    uint8_t* buffer;
+    uint64_t size;
+    uint64_t offset = 0;
 };
 
 
