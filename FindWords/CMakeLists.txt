@@ -11,12 +11,10 @@ if (${WIN32})
     add_executable(${PROJECT_NAME} FindWords.cpp 
                                    Trie.h                    Trie.cpp
                                    bit_classes/BitMask.h     bit_classes/BitMask.cpp
-                                   bit_classes/BitSet.h      bit_classes/BitSet.cpp
                                    menu/BaseMenuItem.h       menu/BaseMenuItem.cpp
                                    menu/MenuItem.h           menu/MenuItem.cpp
                                    menu/Menu.h               menu/Menu.cpp
-                                   service/Timer.h           service/Timer.cpp
-                                   service/LinearAllocator.h service/LinearAllocator.cpp)
+                                   service/Timer.h           service/Timer.cpp)
     target_include_directories(${PROJECT_NAME} PRIVATE bit_classes menu service)
 else()
     message(FATAL_ERROR "This program only for Windows. Sorry.")

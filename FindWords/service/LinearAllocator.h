@@ -9,13 +9,39 @@
 class LinearAllocator
 {
 public:
-    LinearAllocator(uint64_t memorySize);
-    ~LinearAllocator();
+    LinearAllocator(uint64_t memorySize) : size(memorySize)
+    {
+        assert(memorySize > 0);
+        buffer = new uint8_t[memorySize];
+    }
 
-    void* allocate(uint64_t allocatedSize);
-    void deallocate(uint64_t deallocatedSize);
 
-    void reset();
+    ~LinearAllocator()
+    {
+        delete[] buffer;
+    }
+
+
+    void* allocate(uint64_t allocatedSize)
+    {
+        assert(allocatedSize > 0 && (size - offset) >= allocatedSize);
+        uint8_t* allocatedPointer = buffer + offset;
+        offset += allocatedSize;
+        return allocatedPointer;
+    }
+
+
+    void deallocate(uint64_t deallocatedSize)
+    {
+        assert(offset >= deallocatedSize);
+        offset -= deallocatedSize;
+    }
+
+
+    void reset()
+    {
+        offset = 0;
+    }
 
 
 private:
