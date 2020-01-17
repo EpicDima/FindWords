@@ -9,14 +9,16 @@
 class MenuItem : public BaseMenuItem
 {
 public:
-    MenuItem() {}
-    MenuItem(std::string* item, uint64_t languagesNumber, std::function<void()> func);
-    MenuItem(std::string* item, uint64_t languagesNumber, std::function<void()> func, std::function<std::string()> valueFunc);
+    MenuItem() {};
+    MenuItem(std::string key, std::function<void()> func);
+    MenuItem(std::string key, std::function<void()> func, std::function<std::string()> valueFunc);
+    MenuItem(std::string key, std::function<void()> func, Localizer* localizer);
+    MenuItem(std::string key, std::function<void()> func, std::function<std::string()> valueFunc, Localizer* localizer);
     MenuItem(const MenuItem& b);
 
     MenuItem& operator=(const MenuItem& b);
 
-    std::string getString(uint64_t languageIndex, uint64_t maxLength);
+    std::string getString(uint64_t maxLength);
 
 
     std::function<void()> func;

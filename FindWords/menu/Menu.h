@@ -24,7 +24,7 @@ public:
     };
 
 
-    Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menuLength, uint64_t languagesNumber);
+    Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menuLength, Localizer* localizer);
 
     int64_t click();
 
@@ -40,21 +40,16 @@ public:
     void moveLeft();
     void moveByNumber(uint64_t number);
 
-
-    template<typename T> T chooseElementFromArrayByActiveLanguage(T* array)
-    {
-        return array[activeLanguage];
-    }
-
+    std::string getString(std::string key);
 
 private:
+    Localizer* localizer;
+
     uint64_t menuLength;
-    uint64_t languagesNumber;
     MenuItem* menuItems;
     AnotherMenuItems anotherMenuItems;
 
     uint64_t activeItem = 0;
-    uint64_t activeLanguage = 0;
     bool pause = false;
 
     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);

@@ -1,19 +1,22 @@
 #include "BaseMenuItem.h"
 
 
-BaseMenuItem::BaseMenuItem() : item(nullptr), languagesNumber(0) {}
-
-
-BaseMenuItem::BaseMenuItem(std::string* item, uint64_t languagesNumber) : languagesNumber(languagesNumber)
+BaseMenuItem::BaseMenuItem(std::string key, Localizer* localizer)
+    : key(key), localizer(localizer)
 {
-    this->item = new std::string[languagesNumber];
-    for (uint64_t i = 0; i < languagesNumber; i++) {
-        this->item[i] = item[i];
-    }
 }
 
 
-BaseMenuItem::BaseMenuItem(const BaseMenuItem& b) : BaseMenuItem(b.item, b.languagesNumber) {}
+BaseMenuItem::BaseMenuItem(std::string key)
+    : key(key), localizer(nullptr)
+{
+}
+
+
+BaseMenuItem::BaseMenuItem(const BaseMenuItem& b) 
+    : BaseMenuItem(b.key, b.localizer)
+{
+}
 
 
 BaseMenuItem& BaseMenuItem::operator=(const BaseMenuItem& b)
@@ -26,8 +29,13 @@ BaseMenuItem& BaseMenuItem::operator=(const BaseMenuItem& b)
 }
 
 
-std::string BaseMenuItem::operator[](const uint64_t languageIndex)
+void BaseMenuItem::setLocalizer(Localizer* localizer)
 {
-    assert(languageIndex >= 0 && languageIndex < languagesNumber);
-    return item[languageIndex];
+    this->localizer = localizer;
+}
+
+
+std::string BaseMenuItem::get()
+{
+    return localizer->get(key);
 }

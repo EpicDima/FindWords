@@ -1,13 +1,13 @@
 #include "Menu.h"
 
 
-Menu::Menu(
-    MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menuLength, uint64_t languagesNumber)
- : menuLength(menuLength), languagesNumber(languagesNumber), anotherMenuItems(anotherMenuItems)
+Menu::Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menuLength, Localizer* localizer)
+    : localizer(localizer), menuLength(menuLength), anotherMenuItems(anotherMenuItems)
 {
     this->menuItems = new MenuItem[menuLength];
     for (uint64_t i = 0; i < menuLength; i++) {
         this->menuItems[i] = MenuItem(menuItems[i]);
+        this->menuItems[i].setLocalizer(localizer);
     }
 }
 
@@ -60,13 +60,13 @@ void Menu::clear()
 
 uint64_t Menu::maxMenuItemLength()
 {
-    size_t maxLength = anotherMenuItems.menu[activeLanguage].size();
-    if (anotherMenuItems.choose[activeLanguage].length() > maxLength) {
-        maxLength = anotherMenuItems.choose[activeLanguage].size();
+    size_t maxLength = anotherMenuItems.menu.get().size();
+    if (anotherMenuItems.choose.get().length() > maxLength) {
+        maxLength = anotherMenuItems.choose.get().size();
     }
     for (uint64_t i = 0; i < menuLength; i++) {
-        if (menuItems[i][activeLanguage].length() > maxLength) {
-            maxLength = menuItems[i][activeLanguage].size();
+        if (menuItems[i].get().length() > maxLength) {
+            maxLength = menuItems[i].get().size();
         }
     }
     return static_cast<uint64_t>(maxLength);
@@ -77,16 +77,16 @@ void Menu::draw()
 {
     clear();
     uint64_t maxLength = maxMenuItemLength();
-    std::cout << anotherMenuItems.menu[activeLanguage] << std::endl;
+    std::cout << anotherMenuItems.menu.get() << std::endl;
     for (uint64_t i = 0; i < menuLength; i++) {
         if (i == activeItem) {
-            colorPrint(menuItems[i].getString(activeLanguage, maxLength));
+            colorPrint(menuItems[i].getString(maxLength));
         } else {
-            std::cout << menuItems[i].getString(activeLanguage, maxLength);
+            std::cout << menuItems[i].getString(maxLength);
         }
         std::cout << std::endl;
     }
-    std::cout << anotherMenuItems.choose[activeLanguage] << activeItem + 1;
+    std::cout << anotherMenuItems.choose.get() << activeItem + 1;
 }
 
 
@@ -95,7 +95,7 @@ void Menu::enter()
     if (!pause) {
         std::cout << "\n\n\n";
         menuItems[activeItem].func();
-        std::cout << "\n\n" << anotherMenuItems.pause[activeLanguage];
+        std::cout << "\n\n" << anotherMenuItems.pause.get();
         pause = true;
     }
 }
@@ -125,10 +125,11 @@ void Menu::moveDown()
 
 void Menu::moveRight()
 {
-    if (activeLanguage > 0) {
-        activeLanguage--;
+    uint64_t localeInt = static_cast<uint64_t>(localizer->getLocale());
+    if (localeInt < Localizer::LOCALES - 1) {
+        localizer->changeLocale(static_cast<Localizer::Locale>(localeInt + 1));
     } else {
-        activeLanguage = languagesNumber - 1;
+        localizer->changeLocale();
     }
     draw();
 }
@@ -136,10 +137,11 @@ void Menu::moveRight()
 
 void Menu::moveLeft()
 {
-    if (activeLanguage < languagesNumber - 1) {
-        activeLanguage++;
+    uint64_t localeInt = static_cast<uint64_t>(localizer->getLocale());
+    if (localeInt == 0) {
+        localizer->changeLocale(static_cast<Localizer::Locale>(Localizer::LOCALES - 1));
     } else {
-        activeLanguage = 0;
+        localizer->changeLocale(static_cast<Localizer::Locale>(localeInt - 1));
     }
     draw();
 }
@@ -151,6 +153,12 @@ void Menu::moveByNumber(uint64_t number)
         activeItem = number - 1;
         draw();
     }
+}
+
+
+std::string Menu::getString(std::string key)
+{
+    return localizer->get(key);
 }
 
 

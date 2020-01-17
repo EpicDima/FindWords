@@ -98,26 +98,21 @@ int main()
 
 void createMenu()
 {
-    MenuItem* items = new MenuItem[fw::MenuItemsNumber];
-    items[0] = MenuItem(fw::MenuConstants::MenuItemsStrings[0], fw::LanguagesNumber, []() {
-        inputTable();
-        calculate();
-    });
-    items[1] = MenuItem(
-        fw::MenuConstants::MenuItemsStrings[1], fw::LanguagesNumber,
-        []() { needFindCombination = !needFindCombination; }, getStateOfNeedFindCombination);
-    items[2] = MenuItem(
-        fw::MenuConstants::MenuItemsStrings[2], fw::LanguagesNumber, changeMinAndMaxWordLength, getMinMaxLengthsStr);
-    items[3] =
-        MenuItem(fw::MenuConstants::MenuItemsStrings[3], fw::LanguagesNumber, changeDictionary, getVocabularySizeStr);
-    items[4] = MenuItem(fw::MenuConstants::MenuItemsStrings[4], fw::LanguagesNumber, []() { exit(0); });
+    Localizer* localizer = new Localizer();
+
+    vector<MenuItem> items;
+    items.push_back(MenuItem("menu_item_1", []() {inputTable(); calculate();}));
+    items.push_back(MenuItem("menu_item_2", []() { needFindCombination = !needFindCombination; }, getStateOfNeedFindCombination));
+    items.push_back(MenuItem("menu_item_3", changeMinAndMaxWordLength, getMinMaxLengthsStr));
+    items.push_back(MenuItem("menu_item_4", changeDictionary, getVocabularySizeStr));
+    items.push_back(MenuItem("menu_item_5", []() { exit(0); }));
 
     Menu::AnotherMenuItems auxItems = {
-        BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[0], fw::LanguagesNumber),
-        BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[1], fw::LanguagesNumber),
-        BaseMenuItem(fw::MenuConstants::AuxiliaryMenuItemsStrings[2], fw::LanguagesNumber)};
+        BaseMenuItem("menu", localizer),
+        BaseMenuItem("menu_choose_item", localizer),
+        BaseMenuItem("menu_press_to_continue", localizer)};
 
-    mainmenu = new Menu(items, auxItems, fw::MenuItemsNumber, fw::LanguagesNumber);
+    mainmenu = new Menu(items.data(), auxItems, items.size(), localizer);
     mainmenu->draw();
 }
 
@@ -189,7 +184,7 @@ void openDictionary(string filename)
 void changeDictionary()
 {
     string filename;
-    cout << endl << mainmenu->chooseElementFromArrayByActiveLanguage(fw::PathToTheDictionaryString);
+    cout << endl << mainmenu->getString("enter_path_to_dictionary");
     cin >> filename;
     openDictionary(filename);
 }
@@ -201,13 +196,13 @@ pair<uint64_t, string> getCalculationTime()
     string strCalculationTime;
     if (calculationTimeInNanoseconds > 1e11) {
         calculationTime = calculationTimeInNanoseconds / 1e9;
-        strCalculationTime = mainmenu->chooseElementFromArrayByActiveLanguage(fw::CalculationTimeSecondsString);
+        strCalculationTime = mainmenu->getString("calculation_time_s");
     } else if (calculationTimeInNanoseconds > 1e8) {
         calculationTime = calculationTimeInNanoseconds / 1e6;
-        strCalculationTime = mainmenu->chooseElementFromArrayByActiveLanguage(fw::CalculationTimeMillisecondsString);
+        strCalculationTime = mainmenu->getString("calculation_time_ms");
     } else {
         calculationTime = calculationTimeInNanoseconds / 1e3;
-        strCalculationTime = mainmenu->chooseElementFromArrayByActiveLanguage(fw::CalculationTimeMicrosecondsString);
+        strCalculationTime = mainmenu->getString("calculation_time_us");
     }
     return make_pair(calculationTime, strCalculationTime);
 }
@@ -217,11 +212,11 @@ void outputResult(vector<StringAndBitMask>& matchedWords, vector<StringAndBitMas
 {
     pair<uint64_t, string> calculationTimePair = getCalculationTime();
     cout << endl << calculationTimePair.second << setw(14) << calculationTimePair.first << endl << endl;
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::VocabularyWordsSizeString) << setw(14)
+    cout << mainmenu->getString("vocabulary_words_count") << setw(14)
          << vocabularyWordsSize << endl;
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::PossibleWordsSizeString) << setw(14)
+    cout << mainmenu->getString("possible_words_count") << setw(14)
          << possibleWords.size() << endl;
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::MatchedWordsSizeString) << setw(14)
+    cout << mainmenu->getString("matched_words_count") << setw(14)
          << matchedWords.size() << endl;
 
     if (needFindCombination) {
@@ -250,7 +245,7 @@ void outputMatchedWords(vector<StringAndBitMask>& matchedWords)
     tempwords.resize(unique(tempwords.begin(), tempwords.end()) - tempwords.begin());
 
     if (tempwords.size() > 0) {
-        cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::MatchedWordsString) << endl;
+        cout << "\n\n\n" << mainmenu->getString("matched_words_list") << endl;
         for (uint64_t i = 0; i < tempwords.size(); i++) {
             cout << tempwords[i] << endl;
         }
@@ -285,16 +280,16 @@ pair<pair<vector<string>, vector<vector<uint64_t>>>, uint64_t> decodeResults(vec
 WORD* createAttributesArray(uint64_t max)
 {
     WORD* attrs = new WORD[max];
-    uint64_t biggerThan = max / (fw::attributesLength * fw::attributesLength - fw::attributesLength) + 1;
+    uint64_t biggerThan = max / (attributesLength * attributesLength - attributesLength) + 1;
     uint64_t counter = 0;
     for (uint64_t k = 0; k < biggerThan; k++) {
-        for (uint64_t i = 0; i < fw::attributesLength + 1; i++) {
-            for (uint64_t j = 0; j < fw::attributesLength; j++) {
+        for (uint64_t i = 0; i < attributesLength + 1; i++) {
+            for (uint64_t j = 0; j < attributesLength; j++) {
                 if ((i - 1) != j) {
                     if (i == 0) {
-                        attrs[counter] = fw::attributesForeground[j];
+                        attrs[counter] = attributesForeground[j];
                     } else {
-                        attrs[counter] = fw::attributesBackground[i - 1] | fw::attributesForeground[j];
+                        attrs[counter] = attributesBackground[i - 1] | attributesForeground[j];
                     }
 
                     if (++counter >= max) {
@@ -310,7 +305,7 @@ WORD* createAttributesArray(uint64_t max)
 
 void outputTables(vector<StringAndBitMask>& matchedWords, vector<vector<uint64_t>>& decodedResults, WORD* attrs)
 {
-    cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::ColoredTablesString) << "\n";
+    cout << "\n\n\n" << mainmenu->getString("colored_tables") << "\n";
     for (uint64_t h = 0; h < decodedResults.size(); h++) {
         cout << "\n" << h + 1 << ")\n";
         for (uint64_t i = 0; i < numRows; i++) {
@@ -339,10 +334,10 @@ void outputCombinationResults(vector<StringAndBitMask>& matchedWords)
     vector<string> words = p.first.first;
     uint64_t max = p.second;
 
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::CombinedWordsSizeString) << setw(14) << words.size();
+    cout << mainmenu->getString("combined_words_count") << setw(14) << words.size();
 
     if (words.size() > 0) {
-        cout << "\n\n\n" << mainmenu->chooseElementFromArrayByActiveLanguage(fw::CombinedWordsString) << endl;
+        cout << "\n\n\n" << mainmenu->getString("combined_words_list") << endl;
         for (uint64_t i = 0; i < words.size(); i++) {
             cout << words[i] << endl;
         }
@@ -367,9 +362,6 @@ bool comparator(const string& a, const string& b)
 }
 
 
-//  8x8 3-10 109: 312728077 iters    484.00 sec     109
-//  8x8 4-10  57:    279677 iters      0.27 sec     57
-// 11x8 5-10  63:   1547300 iters      1.64 sec     63
 void f2(BitSet& mask, BitSet& indexes, uint64_t start)
 {
     if (mask.isAllTrue()) {
@@ -480,9 +472,9 @@ uint64_t inputPositiveNumber()
 
 void inputTable()
 {
-    cout << endl << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterLinesString);
+    cout << endl << mainmenu->getString("enter_rows_count");
     numRows = inputPositiveNumber();
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterColumnsString);
+    cout << mainmenu->getString("enter_columns_count");
     numCols = inputPositiveNumber();
 
     matrix = new char*[numRows];
@@ -493,7 +485,7 @@ void inputTable()
         }
     }
 
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterLettersString) << endl << endl;
+    cout << mainmenu->getString("enter_letters") << endl << endl;
 
     cin.ignore();
     for (uint64_t i = 0; i < numRows; i++) {
@@ -513,31 +505,31 @@ void inputTable()
 string getStateOfNeedFindCombination()
 {
     if (needFindCombination) {
-        return mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnabledStateString);
+        return mainmenu->getString("enabled");
     } else {
-        return mainmenu->chooseElementFromArrayByActiveLanguage(fw::DisabledStateString);
+        return mainmenu->getString("disabled");
     }
 }
 
 
 string getMinMaxLengthsStr()
 {
-    return mainmenu->chooseElementFromArrayByActiveLanguage(fw::MinimumString) + to_string(minLength) +
-        mainmenu->chooseElementFromArrayByActiveLanguage(fw::MaximumString) + to_string(maxLength);
+    return mainmenu->getString("minimum") + to_string(minLength) +
+        mainmenu->getString("maximum") + to_string(maxLength);
 }
 
 
 string getVocabularySizeStr()
 {
-    return mainmenu->chooseElementFromArrayByActiveLanguage(fw::VocabularySizeString) + to_string(vocabularyWordsSize);
+    return mainmenu->getString("vocabulary_size") + to_string(vocabularyWordsSize);
 }
 
 
 void changeMinAndMaxWordLength()
 {
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterMinLengthString);
+    cout << mainmenu->getString("enter_min_length");
     minLength = inputPositiveNumber();
-    cout << mainmenu->chooseElementFromArrayByActiveLanguage(fw::EnterMaxLengthString);
+    cout << mainmenu->getString("enter_max_length");
     maxLength = inputPositiveNumber();
     while (maxLength < minLength) {
         maxLength = inputPositiveNumber();

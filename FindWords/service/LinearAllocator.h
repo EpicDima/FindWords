@@ -4,7 +4,7 @@
 
 #include <cassert>
 #include <stdint.h>
-
+#include <cstdio>
 
 class LinearAllocator
 {
