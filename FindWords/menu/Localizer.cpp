@@ -4,7 +4,7 @@
 uint64_t Localizer::LOCALES = 2;
 
 
-Localizer::Localizer(Locale locale)
+Localizer::Localizer(Locale locale) : locale(locale)
 {
     changeLocale(locale);
 }
@@ -16,21 +16,23 @@ Localizer::Locale Localizer::getLocale()
 }
 
 
-void Localizer::changeLocale(Locale locale)
+
+void Localizer::changeLocale(Locale loc)
 {
+    this->locale = loc;
     map.clear();
-    std::string filepath = getLocaleFilePath(locale);
+    std::string filepath = getLocaleFilePath();
     parseFile(filepath);
 }
 
 
-std::string Localizer::get(std::string key)
+std::string Localizer::get(const std::string& key)
 {
     return map[key];
 }
 
 
-std::string Localizer::getLocaleFilePath(Locale locale)
+std::string Localizer::getLocaleFilePath()
 {
     std::string localeString;
     switch (locale) {
@@ -42,12 +44,11 @@ std::string Localizer::getLocaleFilePath(Locale locale)
             localeString = "ru";
             break;
     }
-    this->locale = locale;
     return "locale/locale." + localeString + ".txt";
 }
 
 
-void Localizer::parseFile(std::string filepath)
+void Localizer::parseFile(const std::string& filepath)
 {
     std::ifstream file(filepath);
     if (file.is_open()) {

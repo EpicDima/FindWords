@@ -1,36 +1,25 @@
 #include "MenuItem.h"
 
+#include <utility>
+
 
 MenuItem::MenuItem(std::string key, std::function<void()> func)
-    : BaseMenuItem(key), func(func)
+    : BaseMenuItem(std::move(key)), func(std::move(func))
 {
 }
 
 
 MenuItem::MenuItem(std::string key, std::function<void()> func, std::function<std::string()> valueFunc)
-    : MenuItem(key, func)
+    : MenuItem(std::move(key), std::move(func))
 {
-    this->valueFunc = valueFunc;
+    this->valueFunc = std::move(valueFunc);
     this->realTimeValue = true;
 }
 
 
-MenuItem::MenuItem(std::string key, std::function<void()> func, Localizer* localizer)
-    : BaseMenuItem(key, localizer), func(func)
+MenuItem::MenuItem(const MenuItem& b) : MenuItem(b.key, b.func)
 {
-}
-
-
-MenuItem::MenuItem(std::string key, std::function<void()> func, std::function<std::string()> valueFunc, Localizer* localizer)
-    : MenuItem(key, func, localizer)
-{
-    this->valueFunc = valueFunc;
-    this->realTimeValue = true;
-}
-
-
-MenuItem::MenuItem(const MenuItem& b) : MenuItem(b.key, b.func, b.localizer)
-{
+    this->localizer = b.localizer;
     if (b.realTimeValue) {
         this->valueFunc = b.valueFunc;
         this->realTimeValue = true;

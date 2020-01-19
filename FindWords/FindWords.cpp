@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <utility>
 #include <vector>
 
 using namespace std;
@@ -22,14 +23,14 @@ struct StringAndBitMask
     string str;
     BitMask mask;
 
-    StringAndBitMask(string str, BitMask mask) : str(str), mask(mask) {}
+    StringAndBitMask(string str, const BitMask& mask) : str(std::move(str)), mask(mask) {}
 };
 
 
 void createMenu();
 vector<StringAndBitMask> findAllPossibleWords();
 void f(string&& word, uint64_t x, uint64_t y, BitMask mask, vector<StringAndBitMask>& possibleWords);
-void openDictionary(string filename = "dictionary.txt");
+void openDictionary(const string& filename = "dictionary.txt");
 void changeDictionary();
 void outputResult(vector<StringAndBitMask>& matchedWords, vector<StringAndBitMask>& possibleWords);
 void printColorChar(char ch, WORD attribute);
@@ -91,21 +92,20 @@ int main()
     while (true) {
         mainmenu->click();
     }
-
-    return 0;
 }
 
 
 void createMenu()
 {
-    Localizer* localizer = new Localizer();
+    auto* localizer = new Localizer();
 
     vector<MenuItem> items;
-    items.push_back(MenuItem("menu_item_1", []() {inputTable(); calculate();}));
-    items.push_back(MenuItem("menu_item_2", []() { needFindCombination = !needFindCombination; }, getStateOfNeedFindCombination));
-    items.push_back(MenuItem("menu_item_3", changeMinAndMaxWordLength, getMinMaxLengthsStr));
-    items.push_back(MenuItem("menu_item_4", changeDictionary, getVocabularySizeStr));
-    items.push_back(MenuItem("menu_item_5", []() { exit(0); }));
+    items.emplace_back("menu_item_1", []() {inputTable(); calculate();});
+    items.emplace_back("menu_item_2", []() { needFindCombination = !needFindCombination; },
+            getStateOfNeedFindCombination);
+    items.emplace_back("menu_item_3", changeMinAndMaxWordLength, getMinMaxLengthsStr);
+    items.emplace_back("menu_item_4", changeDictionary, getVocabularySizeStr);
+    items.emplace_back("menu_item_5", []() { exit(0); });
 
     Menu::AnotherMenuItems auxItems = {
         BaseMenuItem("menu", localizer),
@@ -132,10 +132,10 @@ vector<StringAndBitMask> findAllPossibleWords()
         }
     }
 
-    for (uint64_t k = 0; k < a.size(); k++) {
+    for (auto & k : a) {
         for (uint64_t i = 0; i < numRows; i++) {
             for (uint64_t j = 0; j < numCols; j++) {
-                a[k].mask[i][j] = static_cast<bool>(a[k].mask[i][j] - originalBitMask[i][j]);
+                k.mask[i][j] = static_cast<bool>(k.mask[i][j] - originalBitMask[i][j]);
             }
         }
     }
@@ -147,7 +147,7 @@ vector<StringAndBitMask> findAllPossibleWords()
 void f(string&& word, uint64_t x, uint64_t y, BitMask mask, vector<StringAndBitMask>& possibleWords)
 {
     if (word.size() >= minLength) {
-        possibleWords.push_back(StringAndBitMask(word, mask));
+        possibleWords.emplace_back(word, mask);
     }
 
     if (word.size() >= maxLength || !vocabularyWords->findSubstr(word)) {
@@ -168,7 +168,7 @@ void f(string&& word, uint64_t x, uint64_t y, BitMask mask, vector<StringAndBitM
 }
 
 
-void openDictionary(string filename)
+void openDictionary(const string& filename)
 {
     ifstream vocabularyFile(filename);
     vocabularyWordsSize = 0;
@@ -238,16 +238,16 @@ void printColorChar(char ch, WORD attribute)
 void outputMatchedWords(vector<StringAndBitMask>& matchedWords)
 {
     vector<string> tempwords;
-    for (uint64_t i = 0; i < matchedWords.size(); i++) {
-        tempwords.push_back(matchedWords[i].str);
+    for (auto & matchedWord : matchedWords) {
+        tempwords.push_back(matchedWord.str);
     }
     sort(tempwords.begin(), tempwords.end(), comparator);
     tempwords.resize(unique(tempwords.begin(), tempwords.end()) - tempwords.begin());
 
-    if (tempwords.size() > 0) {
+    if (!tempwords.empty()) {
         cout << "\n\n\n" << mainmenu->getString("matched_words_list") << endl;
-        for (uint64_t i = 0; i < tempwords.size(); i++) {
-            cout << tempwords[i] << endl;
+        for (const auto & tempword : tempwords) {
+            cout << tempword << endl;
         }
     }
 }
@@ -258,11 +258,11 @@ pair<pair<vector<string>, vector<vector<uint64_t>>>, uint64_t> decodeResults(vec
     vector<string> words;
     vector<vector<uint64_t>> decodedResults;
     uint64_t max = 0;
-    for (uint64_t i = 0; i < results.size(); i++) {
+    for (auto & result : results) {
         uint64_t k = 0;
         vector<uint64_t> temp;
         for (uint64_t j = 0; j < matchedWords.size(); j++) {
-            if (results[i][j]) {
+            if (result[j]) {
                 temp.push_back(j);
                 words.push_back(matchedWords[j].str);
                 k++;
@@ -336,10 +336,10 @@ void outputCombinationResults(vector<StringAndBitMask>& matchedWords)
 
     cout << mainmenu->getString("combined_words_count") << setw(14) << words.size();
 
-    if (words.size() > 0) {
+    if (!words.empty()) {
         cout << "\n\n\n" << mainmenu->getString("combined_words_list") << endl;
-        for (uint64_t i = 0; i < words.size(); i++) {
-            cout << words[i] << endl;
+        for (const auto & word : words) {
+            cout << word << endl;
         }
 
         WORD* attrs = createAttributesArray(max);
@@ -371,9 +371,9 @@ void f2(BitSet& mask, BitSet& indexes, uint64_t start)
     }
     for (uint64_t i = start; i < matchedWordsSize; i++) {
         if ((mask & bitsetMasks[i]).isAllFalse()) {
-            BitSet* temp1 =
+            auto* temp1 =
                 new (linearAllocator.allocate(sizeof(BitSet))) BitSet(mask | bitsetMasks[i], linearAllocator);
-            BitSet* temp2 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(indexes, linearAllocator);
+            auto* temp2 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(indexes, linearAllocator);
             temp2->set(i, true);
             f2(*temp1, *temp2, i);
         }
@@ -384,12 +384,12 @@ void f2(BitSet& mask, BitSet& indexes, uint64_t start)
 
 pair<uint64_t, uint64_t> findMinimumMatchPoint(vector<StringAndBitMask>& matchedWords)
 {
-    uint64_t min = ~0, x0 = 0, y0 = 0;
+    uint64_t min = ~0ULL, x0 = 0, y0 = 0;
     for (uint64_t i = 0; i < numRows; i++) {
         for (uint64_t j = 0; j < numCols; j++) {
             uint64_t t = 0;
-            for (uint64_t k = 0; k < matchedWords.size(); k++) {
-                t += matchedWords[k].mask[i][j];
+            for (auto & matchedWord : matchedWords) {
+                t += matchedWord.mask[i][j];
             }
             if (t < min && t != 0) {
                 min = t;
@@ -405,7 +405,7 @@ pair<uint64_t, uint64_t> findMinimumMatchPoint(vector<StringAndBitMask>& matched
 void ffff(vector<StringAndBitMask> matchedWords)
 {
     iterationSize = 2 *
-        (sizeof(BitSet) + numRows * numCols / TYPESIZE_IN_BYTES + (numRows * numCols % TYPESIZE_IN_BITS == 0 ? 0 : 1));
+        (sizeof(BitSet) + TYPESIZE_IN_BYTES * (numRows * numCols / TYPESIZE_IN_BITS + (numRows * numCols % TYPESIZE_IN_BITS == 0 ? 0 : 1)));
 
     BitSet originalMask(numRows * numCols, originalBitMask.getRawMask(), numRows, numCols);
     BitSet negOriginalMask = ~originalMask;
@@ -421,9 +421,9 @@ void ffff(vector<StringAndBitMask> matchedWords)
     BitSet indexes(matchedWordsSize);
     for (uint64_t i = 0; i < matchedWordsSize; i++) {
         if (matchedWords[i].mask[zeroPoint.first][zeroPoint.second]) {
-            BitSet* temp1 =
+            auto* temp1 =
                 new (linearAllocator.allocate(sizeof(BitSet))) BitSet(bitsetMasks[i] | originalMask, linearAllocator);
-            BitSet* temp2 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(indexes, linearAllocator);
+            auto* temp2 = new (linearAllocator.allocate(sizeof(BitSet))) BitSet(indexes, linearAllocator);
             temp2->set(i, true);
             f2(*temp1, *temp2, 0);
         }
@@ -438,9 +438,9 @@ void calculate()
     vector<StringAndBitMask> possibleWords = findAllPossibleWords();
     vector<StringAndBitMask> matchedWords;
     matchedWords.reserve(possibleWords.size());
-    for (uint64_t i = 0; i < possibleWords.size(); i++) {
-        if (vocabularyWords->findWord(possibleWords[i].str)) {
-            matchedWords.push_back(possibleWords[i]);
+    for (auto & possibleWord : possibleWords) {
+        if (vocabularyWords->findWord(possibleWord.str)) {
+            matchedWords.push_back(possibleWord);
         }
     }
 

@@ -22,7 +22,7 @@ private:
     class Node
     {
     public:
-        Node(bool wholeWord = false);
+        explicit Node(bool wholeWord = false);
 
         void insert(std::string& str, uint64_t size, uint64_t index);
         bool findSubstr(std::string& substr, uint64_t size, uint64_t index);

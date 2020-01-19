@@ -14,8 +14,8 @@ if (${WIN32})
                                    menu/BaseMenuItem.h       menu/BaseMenuItem.cpp
                                    menu/MenuItem.h           menu/MenuItem.cpp
                                    menu/Menu.h               menu/Menu.cpp
-                                   service/Timer.h           service/Timer.cpp
-                                   service/Localizer.h       service/Localizer.cpp)
+                                   menu/Localizer.h menu/Localizer.cpp
+                                   service/Timer.h           service/Timer.cpp)
     target_include_directories(${PROJECT_NAME} PRIVATE bit_classes menu service)
 else()
     message(FATAL_ERROR "This program only for Windows. Sorry.")

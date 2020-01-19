@@ -2,7 +2,7 @@
 #define BASEMENUITEM_H
 
 
-#include "../service/Localizer.h"
+#include "Localizer.h"
 
 #include <cassert>
 #include <string>
@@ -11,19 +11,19 @@
 class BaseMenuItem
 {
 public:
-    BaseMenuItem() {};
+    BaseMenuItem() = default;;
     BaseMenuItem(std::string key, Localizer* localizer);
-    BaseMenuItem(std::string key);
+    explicit BaseMenuItem(std::string key);
     BaseMenuItem(const BaseMenuItem& b);
 
     BaseMenuItem& operator=(const BaseMenuItem& b);
 
-    void setLocalizer(Localizer* localizer);
+    void setLocalizer(Localizer* pLocalizer);
     std::string get();
 
 protected:
     std::string key;
-    Localizer* localizer;
+    Localizer* localizer{};
 };
 
 #endif

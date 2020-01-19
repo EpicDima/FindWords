@@ -3,13 +3,13 @@
 
 
 #include <cassert>
-#include <stdint.h>
+#include <cstdint>
 #include <cstdio>
 
 class LinearAllocator
 {
 public:
-    LinearAllocator(uint64_t memorySize) : size(memorySize)
+    explicit LinearAllocator(uint64_t memorySize) : size(memorySize)
     {
         assert(memorySize > 0);
         buffer = new uint8_t[memorySize];

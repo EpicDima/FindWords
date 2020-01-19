@@ -3,7 +3,7 @@
 
 
 #include <new>
-#include <stdint.h>
+#include <cstdint>
 
 
 class BitMask
@@ -17,7 +17,7 @@ public:
 
     BitMask& operator=(const BitMask& b);
 
-    bool* operator[](const uint64_t index);
+    bool* operator[](uint64_t index);
 
     bool** getRawMask();
 

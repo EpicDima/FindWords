@@ -1,8 +1,10 @@
 #include "Menu.h"
 
+#include <utility>
+
 
 Menu::Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menuLength, Localizer* localizer)
-    : localizer(localizer), menuLength(menuLength), anotherMenuItems(anotherMenuItems)
+    : localizer(localizer), menuLength(menuLength), anotherMenuItems(std::move(anotherMenuItems))
 {
     this->menuItems = new MenuItem[menuLength];
     for (uint64_t i = 0; i < menuLength; i++) {
@@ -12,7 +14,7 @@ Menu::Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menu
 }
 
 
-int64_t Menu::click()
+void Menu::click()
 {
     bool enterBeenCalled = false;
     int64_t k = _getch();
@@ -43,7 +45,6 @@ int64_t Menu::click()
         pause = false;
         draw();
     }
-    return k;
 }
 
 
@@ -125,7 +126,7 @@ void Menu::moveDown()
 
 void Menu::moveRight()
 {
-    uint64_t localeInt = static_cast<uint64_t>(localizer->getLocale());
+    auto localeInt = static_cast<uint64_t>(localizer->getLocale());
     if (localeInt < Localizer::LOCALES - 1) {
         localizer->changeLocale(static_cast<Localizer::Locale>(localeInt + 1));
     } else {
@@ -137,7 +138,7 @@ void Menu::moveRight()
 
 void Menu::moveLeft()
 {
-    uint64_t localeInt = static_cast<uint64_t>(localizer->getLocale());
+    auto localeInt = static_cast<uint64_t>(localizer->getLocale());
     if (localeInt == 0) {
         localizer->changeLocale(static_cast<Localizer::Locale>(Localizer::LOCALES - 1));
     } else {
@@ -156,7 +157,7 @@ void Menu::moveByNumber(uint64_t number)
 }
 
 
-std::string Menu::getString(std::string key)
+std::string Menu::getString(const std::string& key)
 {
     return localizer->get(key);
 }

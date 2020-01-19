@@ -16,19 +16,19 @@ public:
 
     static uint64_t LOCALES;
 
-    Localizer(Locale locale = Locale::RU);
+    explicit Localizer(Locale locale = Locale::RU);
 
     Locale getLocale();
     void changeLocale(Locale locale = Locale::RU);
 
-    std::string get(std::string key);
+    std::string get(const std::string& key);
 
 private:
     Locale locale;
     std::map<std::string, std::string> map;
 
-    std::string getLocaleFilePath(Locale locale);
-    void parseFile(std::string filepath);
+    std::string getLocaleFilePath();
+    void parseFile(const std::string& filepath);
 };
 
 #endif

@@ -1,14 +1,16 @@
 #include "BaseMenuItem.h"
 
+#include <utility>
+
 
 BaseMenuItem::BaseMenuItem(std::string key, Localizer* localizer)
-    : key(key), localizer(localizer)
+    : key(std::move(key)), localizer(localizer)
 {
 }
 
 
 BaseMenuItem::BaseMenuItem(std::string key)
-    : key(key), localizer(nullptr)
+    : key(std::move(key)), localizer(nullptr)
 {
 }
 
@@ -29,9 +31,9 @@ BaseMenuItem& BaseMenuItem::operator=(const BaseMenuItem& b)
 }
 
 
-void BaseMenuItem::setLocalizer(Localizer* localizer)
+void BaseMenuItem::setLocalizer(Localizer* pLocalizer)
 {
-    this->localizer = localizer;
+    this->localizer = pLocalizer;
 }
 
 

@@ -26,7 +26,7 @@ public:
 
     Menu(MenuItem* menuItems, AnotherMenuItems anotherMenuItems, uint64_t menuLength, Localizer* localizer);
 
-    int64_t click();
+    void click();
 
     void clear();
     uint64_t maxMenuItemLength();
@@ -40,7 +40,7 @@ public:
     void moveLeft();
     void moveByNumber(uint64_t number);
 
-    std::string getString(std::string key);
+    std::string getString(const std::string& key);
 
 private:
     Localizer* localizer;

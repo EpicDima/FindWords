@@ -20,13 +20,13 @@ BitMask::BitMask(const BitMask& b) : BitMask(b.nRows, b.nCols)
 }
 
 
-BitMask::~BitMask()
-{
-    // for (uint64_t i = 0; i < nRows; i++) {
-    //     delete[] mask[i];
-    // }
-    // delete[] mask;
-}
+BitMask::~BitMask() = default;
+//{
+//     for (uint64_t i = 0; i < nRows; i++) {
+//         delete[] mask[i];
+//     }
+//     delete[] mask;
+//}
 
 
 BitMask& BitMask::operator=(const BitMask& b)
@@ -39,7 +39,7 @@ BitMask& BitMask::operator=(const BitMask& b)
 }
 
 
-bool* BitMask::operator[](const uint64_t index)
+bool* BitMask::operator[](uint64_t index)
 {
     return mask[index];
 }

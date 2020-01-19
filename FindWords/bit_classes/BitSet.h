@@ -19,7 +19,7 @@ class BitSet
 public:
     BitSet() : nBits(0), count(0), data(nullptr) {}
 
-    BitSet(uint64_t nBits) : nBits(nBits)
+    explicit BitSet(uint64_t nBits) : nBits(nBits)
     {
         count = nBits / TYPESIZE_IN_BITS;
         uint64_t difference = nBits % TYPESIZE_IN_BITS;
@@ -42,7 +42,7 @@ public:
                 } else {
                     data[k] &= ~mask;
                 }
-                mask <<= 1;
+                mask <<= 1ULL;
                 if (mask == 0) {
                     k++;
                     mask = 1;
@@ -78,7 +78,7 @@ public:
 
 
     BitSet(uint64_t nBits, bool** a, uint64_t n, uint64_t m, LinearAllocator& linearAllocator)
-    : BitSet(nBits, linearAllocator)
+        : BitSet(nBits, linearAllocator)
     {
         uint64_t mask = 1;
         uint64_t k = 0;
@@ -89,7 +89,7 @@ public:
                 } else {
                     data[k] &= ~mask;
                 }
-                mask <<= 1;
+                mask <<= 1ULL;
                 if (mask == 0) {
                     k++;
                     mask = 1;
@@ -174,10 +174,11 @@ public:
     void set(uint64_t index, bool value)
     {
         uint64_t mask;
+        index = getTypeIndexAndMask(index, mask);
         if (value) {
-            data[getTypeIndexAndMask(index, mask)] |= mask;
+            data[index] |= mask;
         } else {
-            data[getTypeIndexAndMask(index, mask)] &= ~mask;
+            data[index] &= ~mask;
         }
     }
 
@@ -217,12 +218,6 @@ private:
         assert(index < nBits);
         mask = 1ULL << (index % TYPESIZE_IN_BITS);
         return index / TYPESIZE_IN_BITS;
-    }
-
-
-    BitSet& operator=(const BitSet& b)
-    {
-        return *this;
     }
 };
 
