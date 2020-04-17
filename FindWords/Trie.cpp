@@ -13,19 +13,19 @@ Trie::~Trie()
 }
 
 
-void Trie::insert(std::string& word)
+void Trie::insert(std::u16string& word)
 {
     root->insert(word, word.size(), 0);
 }
 
 
-bool Trie::findSubstr(std::string& substr)
+bool Trie::findSubstr(std::u16string& substr)
 {
     return root->findSubstr(substr, substr.size(), 0);
 }
 
 
-bool Trie::findWord(std::string& word)
+bool Trie::findWord(std::u16string& word)
 {
     return root->findWord(word, word.size(), 0);
 }
@@ -37,7 +37,7 @@ Trie::Node::Node(bool wholeWord)
 }
 
 
-void Trie::Node::insert(std::string& str, uint64_t size, uint64_t index)
+void Trie::Node::insert(std::u16string& str, uint64_t size, uint64_t index)
 {
     if (letters.count(str[index])) {
         if (index < size - 1) {
@@ -48,16 +48,16 @@ void Trie::Node::insert(std::string& str, uint64_t size, uint64_t index)
     } else {
         if (index < size - 1) {
             Node* node = new Node(false);
-            this->letters.insert(std::pair<char, Node*>(str[index], node));
+            this->letters.insert(std::pair<char16_t, Node*>(str[index], node));
             node->insert(str, size, index + 1);
         } else {
-            this->letters.insert(std::pair<char, Node*>(str[index], new Node(true)));
+            this->letters.insert(std::pair<char16_t, Node*>(str[index], new Node(true)));
         }
     }
 }
 
 
-bool Trie::Node::findSubstr(std::string& substr, uint64_t size, uint64_t index)
+bool Trie::Node::findSubstr(std::u16string& substr, uint64_t size, uint64_t index)
 {
     if (index == size) {
         return true;
@@ -69,7 +69,7 @@ bool Trie::Node::findSubstr(std::string& substr, uint64_t size, uint64_t index)
 }
 
 
-bool Trie::Node::findWord(std::string& word, uint64_t size, uint64_t index)
+bool Trie::Node::findWord(std::u16string& word, uint64_t size, uint64_t index)
 {
     if (index == size && this->wholeWord) {
         return true;

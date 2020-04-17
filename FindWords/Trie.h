@@ -13,9 +13,9 @@ public:
 
     ~Trie();
 
-    void insert(std::string& word);
-    bool findSubstr(std::string& substr);
-    bool findWord(std::string& word);
+    void insert(std::u16string& word);
+    bool findSubstr(std::u16string& substr);
+    bool findWord(std::u16string& word);
 
 
 private:
@@ -24,12 +24,12 @@ private:
     public:
         explicit Node(bool wholeWord = false);
 
-        void insert(std::string& str, uint64_t size, uint64_t index);
-        bool findSubstr(std::string& substr, uint64_t size, uint64_t index);
-        bool findWord(std::string& word, uint64_t size, uint64_t index);
+        void insert(std::u16string& str, uint64_t size, uint64_t index);
+        bool findSubstr(std::u16string& substr, uint64_t size, uint64_t index);
+        bool findWord(std::u16string& word, uint64_t size, uint64_t index);
 
     private:
-        std::unordered_map<char, Node*> letters;
+        std::unordered_map<char16_t, Node*> letters;
         bool wholeWord;
     };
 

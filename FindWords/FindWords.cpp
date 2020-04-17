@@ -7,6 +7,7 @@
 #include "menu/Menu.h"
 
 #include "FindWordsConstants.h"
+#include "Solver.h"
 #include "Trie.h"
 
 #include <algorithm>
@@ -86,12 +87,40 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    openDictionary();
-    createMenu();
+    Solver solver;
+    solver.openDictionary("dictionary.txt");
 
-    while (true) {
-        mainmenu->click();
+    uint64_t rows = 3, cols = 7;
+
+    char** table = new char*[rows];
+    for (uint64_t i = 0; i < rows; i++) {
+        table[i] = new char[cols];
+        for (uint64_t j = 0; j < cols; j++) {
+            table[i][j] = ' ';
+        }
     }
+
+    cin.ignore();
+    for (uint64_t i = 0; i < rows; i++) {
+        cin.getline(table[i], cols + 1, '\n');
+    }
+    cout << endl;
+
+    solver.setMinAndMaxWordLength(rows, cols);
+    Solver::Solution solution = solver.solve(table, rows, cols, true);
+
+    cout << solution.possibleWords.size() << endl;
+
+
+
+    return 0;
+
+//    openDictionary();
+//    createMenu();
+//
+//    while (true) {
+//        mainmenu->click();
+//    }
 }
 
 
