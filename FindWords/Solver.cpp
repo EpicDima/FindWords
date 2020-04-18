@@ -16,15 +16,17 @@ uint64_t Solver::openDictionary(const std::string& filename)
         file.getline(t, size, u'\n');
         while (!file.fail()) {
             std::u16string s(t);
-            vocabulary->insert(s);
-            vocabularySize++;
+            if (s.size() > 0) {
+                vocabulary->insert(s);
+                vocabularySize++;
+            }
             file.getline(t, size, u'\n');
         }
         delete [] t;
         file.close();
         return vocabularySize;
     }
-    return -1;
+    return 0;
 }
 
 
@@ -77,8 +79,12 @@ std::vector<std::u16string> Solver::getUniqueWords(std::vector<StringAndBitMask>
 }
 
 
-Solver::Solution Solver::solve(char16_t** table, uint64_t rows, uint64_t cols, bool needFindCombination)
+Solver::Solution Solver::solve(char16_t** table, uint64_t rows, uint64_t cols, bool needFindCombinations)
 {
+    if (vocabularySize == 0) {
+        return {};
+    }
+
     presolve(table, rows, cols);
 
     Timer timer;
@@ -91,7 +97,7 @@ Solver::Solution Solver::solve(char16_t** table, uint64_t rows, uint64_t cols, b
         }
     }
 
-    if (needFindCombination) {
+    if (needFindCombinations) {
         ffff(matchedWords);
     }
 

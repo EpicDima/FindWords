@@ -41,7 +41,7 @@ public:
 
 
     uint64_t openDictionary(const std::string& filename);
-    Solution solve(char16_t** table, uint64_t rows, uint64_t cols, bool needFindCombination = false);
+    Solution solve(char16_t** table, uint64_t rows, uint64_t cols, bool needFindCombinations = false);
     bool setMinAndMaxWordLength(uint64_t min, uint64_t max);
     std::pair<uint64_t, uint64_t> getMinAndMaxWordLength();
 
@@ -51,7 +51,7 @@ private:
     constexpr static const int64_t DX[NUMBER_OF_DIRECTIONS] = {1, -1, 0, 0};
     constexpr static const int64_t DY[NUMBER_OF_DIRECTIONS] = {0, 0, 1, -1};
 
-    static const uint64_t ALLOCATOR_BUFFER = 25 * 1024 * 1024;
+    static const uint64_t ALLOCATOR_BUFFER_SIZE = 25 * 1024 * 1024;
 
     uint64_t numRows;
     uint64_t numCols;
@@ -68,7 +68,7 @@ private:
     std::vector<BitSet> results;
     uint64_t matchedWordsSize = 0;
 
-    LinearAllocator linearAllocator = LinearAllocator(ALLOCATOR_BUFFER);
+    LinearAllocator linearAllocator = LinearAllocator(ALLOCATOR_BUFFER_SIZE);
     uint64_t iterationSize;
 
 
