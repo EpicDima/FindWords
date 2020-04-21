@@ -1,7 +1,3 @@
-//
-// Created by Dima on 19.01.2020.
-//
-
 #ifndef FINDWORDS_SOLVER_H
 #define FINDWORDS_SOLVER_H
 

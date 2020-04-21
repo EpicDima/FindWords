@@ -8,8 +8,6 @@
 #include <QtWidgets>
 
 #include "Solver.h"
-#include "singleworddialog.h"
-
 
 namespace Ui
 {

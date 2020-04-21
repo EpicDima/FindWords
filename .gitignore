@@ -1,5 +1,4 @@
-*.exe
-.vscode
-build
-cmake-build-default
 .idea
+cmake-build-debug
+/GoogleTests/googletest/
+/GoogleBenchmarks/benchmark/
